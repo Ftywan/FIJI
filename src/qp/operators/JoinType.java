@@ -14,6 +14,6 @@ public class JoinType {
     public static final int HASHJOIN = 2;
 
     public static int numJoinTypes() {
-        return 1;
+        return 2;
     }
 }
