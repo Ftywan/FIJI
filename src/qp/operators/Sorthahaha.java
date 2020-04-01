@@ -102,16 +102,39 @@ public class Sort extends Operator {
 
     }
 
+    private int compareTuples(Tuple t1, Tuple t2) {
+        for (int sortKey: sortKeyIndex) {
+            int result = Tuple.compareTuples(t1, t2, sortKey);
+            if (result != 0) {
+                return result;
+            }
+        }
+        return 0
+    }
+
+
     private String runFileName(int passNum, int runNum) {
+
         return "temp_" + passNum + "_" + runNum;
     }
 
     public Batch next() {
+        if (eos) {
+            close();
+            return null;
+        }
+
+
 
     }
 
     public boolean close() {
-
+        super.close();
+        try{
+            sortedStream.close();
+        } catch (IOException e) {
+            System.err.println("Cannot close sortedStream " + e.toString());
+        }
     }
 
 
