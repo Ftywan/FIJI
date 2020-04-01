@@ -22,8 +22,8 @@ public class BlockNestedJoin extends Join{
 	ObjectInputStream in;               // File pointer to the right hand materialized file
 	ArrayList<Tuple> block;
 
-	int leftCursor;                     // Cursor for left side buffer
-	int rightCursor;                    // Cursor for right side buffer
+	static int leftCursor;                     // Cursor for left side buffer
+	static int rightCursor;                    // Cursor for right side buffer
 	boolean endOfLeftStream;            // Whether end of stream (left table) is reached
 	boolean endOfRightStream;           // Whether end of stream (right table) is reached
 
@@ -80,6 +80,7 @@ public class BlockNestedJoin extends Join{
 	}
 
 	public Batch next() {
+		int i, j;
 		System.out.println("next entered");
 		if (endOfLeftStream) {
 			return null;
@@ -90,21 +91,20 @@ public class BlockNestedJoin extends Join{
 			if (leftCursor == 0 && endOfRightStream == true) {
 				block.clear();
 				/** NumBuffer - 2 pages in the buffer is available for caching the left table **/
-				for (int i = 0; i < numBuff - 2; i++) {
+				for (int a = 0; a < numBuff - 2; a++) {
 					/** load each page into the buffer **/
 					leftInputPage = (Batch) left.next();
 					/** there is no data in the left table **/
-					if (leftInputPage == null) {
-						endOfLeftStream = true;
+					if (leftInputPage != null) {
+						block.addAll(leftInputPage.getTuples());
+					} else {
 						break;
 					}
-					/** load all tuples in the page to the block **/
-					for (int j = 0; j < leftInputPage.size(); j++) { //the number of elements in the input page can be smaller than the batch size
-						Tuple leftTuple = leftInputPage.get(j);
-						block.add(leftTuple);
-					}
 				} // block loading finished
-
+				if (block.isEmpty()) {
+					endOfLeftStream = true;
+					return outputPage;
+				}
 				// initiate the reading for the right table
 				try {
 					in = new ObjectInputStream(new FileInputStream(rightFileName));
@@ -122,13 +122,14 @@ public class BlockNestedJoin extends Join{
 						rightInputPage = (Batch) in.readObject();
 					}
 					/** iterate through to find join-able pairs **/
-					for (int i = 0; i < block.size(); i ++) {
-						for (int j = 0; j < rightInputPage.size(); j ++) {
-							Tuple leftTuple = block.get(i);
+					for (i = leftCursor; i < block.size(); i ++) {
+						Tuple leftTuple = block.get(i);
+						for (j = rightCursor; j < rightInputPage.size(); j ++) {
 							Tuple rightTuple = rightInputPage.get(j);
+							Debug.PPrint(leftTuple);
+							Debug.PPrint(rightTuple);
 							if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex)) {
 								Tuple outTuple = leftTuple.joinWith(rightTuple);
-								Debug.PPrint(outTuple);
 								outputPage.add(outTuple);
 								/** conditions of left and right cursors when the output buffer page is full **/
 								if (outputPage.isFull()) {
