@@ -123,7 +123,7 @@ public class BlockNestedJoin extends Join{
 				System.out.println(rightCursor);
 				try {
 					//if (rightCursor == 0 && leftCursor == 0) {
-					if (rightCursor == 0) {
+					if (rightCursor == 0 && leftCursor == 0) {
 						rightInputPage = (Batch) in.readObject();
 					}
 					/** iterate through to find join-able pairs **/
@@ -131,8 +131,8 @@ public class BlockNestedJoin extends Join{
 						Tuple leftTuple = block.get(i);
 						for (j = rightCursor; j < rightInputPage.size(); j ++) {
 							Tuple rightTuple = rightInputPage.get(j);
-							Debug.PPrint(leftTuple);
-							Debug.PPrint(rightTuple);
+//							Debug.PPrint(leftTuple);
+//							Debug.PPrint(rightTuple);
 							if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex)) {
 								Tuple outTuple = leftTuple.joinWith(rightTuple);
 								outputPage.add(outTuple);
