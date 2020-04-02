@@ -61,7 +61,7 @@ public class BlockNestedJoin extends Join{
 			return false;
 		} else {
 			fileNumber ++;
-			rightFileName = "BNJtemp-" + fileNumber;
+			rightFileName = "BNJtemp-" + String.valueOf(fileNumber);
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rightFileName));
 				while ((materializePage = right.next()) != null) {
@@ -107,6 +107,7 @@ public class BlockNestedJoin extends Join{
 				}
 				// initiate the reading for the right table
 				try {
+					System.out.println("BNJ: entering this loop");
 					in = new ObjectInputStream(new FileInputStream(rightFileName));
 					endOfRightStream = false;
 				} catch (IOException io) {
@@ -117,8 +118,12 @@ public class BlockNestedJoin extends Join{
 
 			// still under the progress of comparing the current left with the whole right table
 			while (endOfRightStream == false) {
+				System.out.println("eors set to false");
+				System.out.print("rightCursor is: ");
+				System.out.println(rightCursor);
 				try {
-					if (rightCursor == 0 && leftCursor == 0) {
+					//if (rightCursor == 0 && leftCursor == 0) {
+					if (rightCursor == 0) {
 						rightInputPage = (Batch) in.readObject();
 					}
 					/** iterate through to find join-able pairs **/
@@ -138,9 +143,11 @@ public class BlockNestedJoin extends Join{
 										rightCursor = 0;
 									} else if (i != block.size() - 1 && j == rightInputPage.size() - 1) {
 										leftCursor = i + 1;
-										rightCursor = 0;
+										//rightCursor = 0;
+										rightCursor = j;
 									} else if (i == block.size() - 1 && j != rightInputPage.size() - 1) {
-										leftCursor = i;
+										//leftCursor = i;
+										leftCursor = 0;
 										rightCursor = j + 1;
 									} else {
 										leftCursor = i;
@@ -173,6 +180,7 @@ public class BlockNestedJoin extends Join{
 	}
 
 	public boolean close() {
+		System.out.println("Closing BNL");
 		File f = new File(rightFileName);
 		f.delete();
 		return true;

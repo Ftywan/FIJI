@@ -1,79 +1,52 @@
-
 package qp.operators;
-
-import java.util.Vector;
 
 import qp.utils.Attribute;
 import qp.utils.Batch;
-import qp.utils.Tuple;
 import qp.utils.Condition;
+import qp.utils.Tuple;
 
 import java.util.ArrayList;
 
-public class SortMergeJoin extends Join {
-	// The number of tuples per output batch.
-	private int batchSize;
+/** Creating a Join:
+ *  1. Update RandomOptimizer to allow SortMergeJoin
+ *  2. Update JoinType and numJoinTypes to allow SortMergeJoin
+ *  3. Update PlanCost
+ */
 
-	// Index of the join attribute in left table.
+/** 1. open(): sort left and sort right
+ *  2. next(): scan through sored left and right, and returns equal tuples
+ *  3. close(): close left and right
+ */
+public class SortMergeJoin extends Join {
+
+	int batchSize;
+	Batch outBatch;
 	ArrayList<Integer> leftIndices;
 	ArrayList<Integer> rightIndices;
 	ArrayList<Attribute> leftAttributes;
 	ArrayList<Attribute> rightAttributes;
-	// Type of the join attribute.
-	private int attrType;
 	Sort sortedLeft;
 	Sort sortedRight;
+	Batch leftBatch;
+	Batch rightBatch;
+	int lcurs;
+	int rcurs;
+	boolean eosl = false;
+	boolean eosr = false;
+	ArrayList<Tuple> rightPartition;
+	int partitionEosr;
+	Tuple leftTuple;
+	Tuple rightTuple;
 
-	// The buffer for the left input stream.
-	private Batch leftBatch;
-	// The buffer for the right input stream.
-	private Batch rightBatch;
 
-	// The tuple that is currently being processed from left input batch.
-	private Tuple leftTuple = null;
-	// The tuple that is currently being processed from right input batch.
-	private Tuple rightTuple = null;
-
-	// Cursor for left side buffer.
-	private int leftCursor = 0;
-	// Cursor for right side buffer.
-	private int rightCursor = 0;
-
-	// The right partition that is currently being joined in.
-	private Vector<Tuple> rightPartition = new Vector<>();
-	// The index of the tuple that is currently being processed in the current right partition (0-based).
-	private int rightPartitionIndex = 0;
-	// The next right tuple (i.e., the first element of the next right partition).
-	private Tuple nextRightTuple = null;
-
-	// Whether end of stream is reached for the left table.
-	private boolean eosLeft = false;
-	// Whether end of stream is reached for the right table.
-	private boolean eosRight = false;
-
-	/**
-	 * Instantiates a new join operator using block-based nested loop algorithm.
-	 *
-	 * @param jn is the base join operator.
-	 */
 	public SortMergeJoin(Join jn) {
-		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
+		super(jn.getLeft(), jn.getRight(), jn.getConditionList(), jn.getOpType());
 		schema = jn.getSchema();
 		jointype = jn.getJoinType();
 		numBuff = jn.getNumBuff();
 	}
 
-	/**
-	 * Opens this operator by performing the following operations:
-	 * 1. Sorts the left & right relation with external sort;
-	 * 2. Stores the sorted relations from both sides into files;
-	 * 3. Opens the connections.
-	 *
-	 * @return true if the operator is opened successfully.
-	 */
-	@Override
 	public boolean open() {
-		System.out.println("Opening SortMerge");
 		/** select number of tuples per batch **/
 		int tuplesize = schema.getTupleSize();
 		batchSize = Batch.getPageSize() / tuplesize;
@@ -101,227 +74,216 @@ public class SortMergeJoin extends Join {
 		return true;
 	}
 
-	/**
-	 * Selects tuples satisfying the join condition from input buffers and returns.
-	 *
-	 * @return the next page of output tuples.
-	 */
-	@Override
 	public Batch next() {
-		// Returns empty if either left or right table reaches end-of-stream.
-		if (eosLeft || eosRight) {
+		System.out.println("SMJ: Entering next()");
+		// Read one left page and always read in partition into the memory
+		if (eosl || eosr) {
+			System.out.println("SMJ: Closing next()");
 			close();
 			return null;
 		}
-
-		// To handle the 1st run.
 		if (leftBatch == null) {
 			leftBatch = sortedLeft.next();
+			//System.out.print("SMJ: left batch is: ");
+			//Debug.PPrint(leftBatch);
 			if (leftBatch == null) {
-				eosLeft = true;
+				eosl = true;
 				return null;
 			}
-			leftTuple = readNextLeftTuple();
-			if (leftTuple == null) {
-				eosLeft = true;
-				return null;
-			}
+			// read in next left tuple
+			System.out.println("first left Batch is");
+			Debug.PPrint(leftBatch);
+			leftTuple = leftBatch.get(lcurs);
 		}
 		if (rightBatch == null) {
 			rightBatch = sortedRight.next();
 			if (rightBatch == null) {
-				eosRight = true;
+				eosr = true;
 				return null;
 			}
-			rightPartition = createNextRightPartition();
-			if (rightPartition.isEmpty()) {
-				eosRight = true;
-				return null;
-			}
-			rightPartitionIndex = 0;
-			rightTuple = rightPartition.elementAt(rightPartitionIndex);
+			System.out.println("SMJ: first rightBatch is ");
+			Debug.PPrint(rightBatch);
+			rightPartition = getNextPartition();
+			//TODO: try & catch: Print error when next partition exceeds buffer number
+			partitionEosr = 0;
+			rightTuple = rightPartition.get(0);
+			//System.out.println("SMJ: Right tuple is");
+			//Debug.PPrint(rightTuple);
 		}
 
-		// The output buffer.
 		Batch outBatch = new Batch(batchSize);
-
 		while (!outBatch.isFull()) {
-			int comparisionResult = Tuple.compareTuples(leftTuple, rightTuple, leftIndices, rightIndices);
-			if (comparisionResult == 0) {
-				outBatch.add(leftTuple.joinWith(rightTuple));
-
-				System.out.print("leftTuple is: ");
-				Debug.PPrint(leftTuple);
-				System.out.print("rightTuple is: ");
-				Debug.PPrint(rightTuple);
-
-				// Left tuple remains unchanged if it has not attempted to match with all tuples in the current right partition.
-				if (rightPartitionIndex < rightPartition.size() - 1) {
-					rightPartitionIndex++;
-					rightTuple = rightPartition.elementAt(rightPartitionIndex);
-				} else {
-					Tuple nextLeftTuple = readNextLeftTuple();
-					if (nextLeftTuple == null) {
-						eosLeft = true;
-						break;
-					}
-					comparisionResult = Tuple.compareTuples(leftTuple, nextLeftTuple, leftIndices, leftIndices);
-					leftTuple = nextLeftTuple;
-
-					// Moves back to the beginning of right partition if the next left tuple remains the same value as the current one.
-					if (comparisionResult == 0) {
-						rightPartitionIndex = 0;
-						rightTuple = rightPartition.elementAt(0);
-					} else {
-						// Proceeds and creates a new right partition otherwise.
-						rightPartition = createNextRightPartition();
-						if (rightPartition.isEmpty()) {
-							eosRight = true;
+			int compareResult = Tuple.compareTuples(leftTuple, rightTuple, leftIndices, rightIndices);
+			if (compareResult == 0) { // left and right tuples are equal
+				System.out.println("SMJ: Equal found");
+				outBatch.add(leftTuple.joinWith(rightTuple)); // add join result into outBatch, continues to next comparison
+				if (partitionEosr == rightPartition.size()-1) {//finish reading right partition
+					// if next left tuple has the same key value as current left tuple, we don't advance right partition first
+					Tuple lastLeftTuple = leftTuple;
+					lcurs++;
+					if (lcurs == leftBatch.size()) {//left cursor reached the size of leftBatch
+						leftBatch = sortedLeft.next();
+						if (leftBatch == null || leftBatch.isEmpty()) {
+							eosl = true;
 							break;
 						}
+						lcurs = 0;
+					}
+					/*
+					System.out.println("SMJ: lcurs here is: ");
+					System.out.println(lcurs);
+					System.out.println("left Batch is: ");
+					Debug.PPrint(leftBatch);
+					*/
+					leftTuple = leftBatch.get(lcurs);
+					//lcurs++;
+					if (leftTuple == null) {
+						eosl = true;
+						break;
+					}
+					System.out.println("SMJ: Checking two consecutive left tuples");
+					Debug.PPrint(lastLeftTuple);
+					Debug.PPrint(leftTuple);
+					compareResult = Tuple.compareTuples(lastLeftTuple, leftTuple, leftIndices, rightIndices);
 
-						// Updates the right tuple.
-						rightPartitionIndex = 0;
-						rightTuple = rightPartition.elementAt(rightPartitionIndex);
+					if (compareResult == 0) {// two consecutive tuples has equal values
+						partitionEosr = 0;
+						rightTuple = rightPartition.get(partitionEosr);
+					} else {// we can get next partition for right
+						rightPartition = getNextPartition();
+						if (rightPartition.size() == 0) {
+							eosr = true;
+							break;
+						}
+						partitionEosr = 0;
+						rightTuple = rightPartition.get(partitionEosr);
 					}
 				}
-			} else if (comparisionResult < 0) {
-				leftTuple = readNextLeftTuple();
-				if (leftTuple == null) {
-					eosLeft = true;
+				else if (partitionEosr < rightPartition.size() - 1) {//read next tuple from right partition
+					partitionEosr++;
+					System.out.println("partionEsor is " + partitionEosr);
+					rightTuple =  rightPartition.get(partitionEosr);
+				}
+			}
+			else if (compareResult > 0) { // left tuple is larger, advance right, remember for right we always advance by partition
+				System.out.println("SMJ: Advance right");
+				rightPartition = getNextPartition(); // get next right partition
+				if (rightPartition.size() == 0) {
+					eosr = true;
 					break;
 				}
-			} else {
-				rightPartition = createNextRightPartition();
-				if (rightPartition.isEmpty()) {
-					eosRight = true;
-					break;
+				partitionEosr = 0;
+				rightTuple = rightPartition.get(partitionEosr);
+			}
+			else if (compareResult < 0) { // right tuple is larger, advance left
+				System.out.println("SMJ: Advance left ");
+				lcurs++;
+				if (lcurs == leftBatch.size()) { // no more tuples to read in leftBatch
+					leftBatch = sortedLeft.next(); //read in new Batch
+					if (leftBatch.isEmpty()) {
+						eosl = true;
+						break;
+					}
+					lcurs = 0; // set cursor back to 0
 				}
-
-				rightPartitionIndex = 0;
-				rightTuple = rightPartition.elementAt(rightPartitionIndex);
+				leftTuple = leftBatch.get(lcurs);
+				Debug.PPrint(leftTuple);
 			}
 		}
-		Debug.PPrint(outBatch);
 		return outBatch;
 	}
 
-	/**
-	 * Creates the next partition from the right input batch based on the current right cursor value.
-	 *
-	 * @return a vector containing all tuples in the next right partition.
-	 */
-	private Vector<Tuple> createNextRightPartition() {
-		Vector<Tuple> partition = new Vector<>();
-		int comparisionResult = 0;
-		if (nextRightTuple == null) {
-			nextRightTuple = readNextRightTuple();
-			if (nextRightTuple == null) {
+	private ArrayList<Tuple> getNextPartition() {
+		System.out.println("Generatin next partition");
+		/** 
+			we keep reading in right tuples until there is a value change
+			Remember we always get right by partition
+		*/
+		ArrayList<Tuple> partition = new ArrayList<Tuple>();
+		int compResult = 0;
+		Tuple next = null;
+
+		/*
+		//get next right tuple
+		if (rightBatch == null) {//if current rightBatch is already null, we can't get any rightPartition
+			return partition;
+		}
+		else if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
+			rightBatch = sortedRight.next(); //get next rightBatch
+			//System.out.println("SMJ: current rightBatch has reached the end");
+			if (rightBatch == null) { //if next rightBatch is null
+				return null; 
+			}
+			Debug.PPrint(rightBatch);
+			rcurs = 0;
+		}
+		//System.out.println("SMJ: Getting next right tuple from rightBatch");
+		next = rightBatch.get(rcurs);
+		//System.out.println("SMJ: Next right tuple is :");
+		//Debug.PPrint(next);
+		if (next == null) {
+			return null;
+		}
+		rcurs++;
+		compResult = 0;
+		*/
+
+		if (rightBatch == null || rightBatch.isEmpty()) {
+			return partition;
+		}
+		else if (rcurs == rightBatch.size()) {
+			rightBatch = sortedRight.next();
+			if (rightBatch == null || rightBatch.isEmpty()) {
+				checkPartitionSize(partition);
 				return partition;
 			}
+			rcurs = 0;
 		}
+		next = rightBatch.get(rcurs);
+		//rcurs++;
 
-		// Continues until the next tuple carries a different value.
-		while (comparisionResult == 0) {
-			partition.add(nextRightTuple);
-
-			nextRightTuple = readNextRightTuple();
-			if (nextRightTuple == null) {
-				break;
+		while (compResult == 0) {
+			rcurs++;
+			System.out.println("SMJ: adding this tuple into partition");
+			Debug.PPrint(next);
+			partition.add(next);
+			// get next right tuple
+			//if (next == null) {//get next right tuple
+			System.out.print("SMJ: rcurs is: ");
+			System.out.println(rcurs);
+			if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
+				rightBatch = sortedRight.next(); //get next rightBatch
+				if (rightBatch == null || rightBatch.isEmpty()) { //if next rightBatch is null
+					checkPartitionSize(partition);
+					return partition;
+				}
+				rcurs = 0;
 			}
-			comparisionResult = Tuple.compareTuples(partition.elementAt(0), nextRightTuple, rightIndices, rightIndices);
+			next = rightBatch.get(rcurs);
+			//System.out.println("SMJ: checking two tuples");
+			//Debug.PPrint(partition.get(0));
+			//Debug.PPrint(next);
+			compResult = Tuple.compareTuples(partition.get(0), next, rightIndices, rightIndices);
 		}
-
+		System.out.println("SMJ: Finish generating right partition");
+		System.out.println();
+		checkPartitionSize(partition);
 		return partition;
 	}
 
-	/**
-	 * Reads the next tuple from left input batch.
-	 *
-	 * @return the next tuple if available; null otherwise.
-	 */
-	private Tuple readNextLeftTuple() {
-		// Reads in another batch if necessary.
-		if (leftBatch == null) {
-			eosLeft = true;
-			return null;
-		} else if (leftCursor == leftBatch.size()) {
-			leftBatch = left.next();
-			leftCursor = 0;
+	// Do nothing, just report an error message
+	private void checkPartitionSize(ArrayList<Tuple> partition) {
+		//TODO: check if PartitionSize exceeds numBuff
+		int numTuples = batchSize * (numBuff - 2);
+		if (partition.size() > numTuples) {
+			System.out.println("A partition size is larger than buffer size, might generate wrong results");
 		}
-
-		// Checks whether the left batch still has tuples left.
-		if (leftBatch == null || leftBatch.size() <= leftCursor) {
-			eosLeft = true;
-			return null;
-		}
-
-		// Reads in the next tuple from left batch.
-		Tuple nextLeftTuple = leftBatch.get(leftCursor);
-		leftCursor++;
-		return nextLeftTuple;
 	}
 
-	/**
-	 * Reads the next tuple from right input batch.
-	 *
-	 * @return the next tuple if available; null otherwise.
-	 */
-	private Tuple readNextRightTuple() {
-		// Reads another batch if necessary.
-		if (rightBatch == null) {
-			return null;
-		} else if (rightCursor == rightBatch.size()) {
-			rightBatch = right.next();
-			rightCursor = 0;
-		}
-
-		// Checks whether the right batch still has tuples left.
-		if (rightBatch == null || rightBatch.size() <= rightCursor) {
-			return null;
-		}
-
-		// Reads the next tuple.
-		Tuple next = rightBatch.get(rightCursor);
-		rightCursor++;
-		return next;
-	}
-
-	/**
-	 * Compares two tuples based on the join attribute.
-	 *
-	 * @param tuple1 is the first tuple.
-	 * @param tuple2 is the second tuple.
-	 * @return an integer indicating the comparision result, compatible with the {@link java.util.Comparator} interface.
-	 */
-
-    /*
-    private int compareTuples(Tuple tuple1, Tuple tuple2, int index1, int index2) {
-        Object value1 = tuple1.dataAt(index1);
-        Object value2 = tuple2.dataAt(index2);
-
-        switch (attrType) {
-            case Attribute.INT:
-                return Integer.compare((int) value1, (int) value2);
-            case Attribute.STRING:
-                return ((String) value1).compareTo((String) value2);
-            case Attribute.REAL:
-                return Float.compare((float) value1, (float) value2);
-            default:
-                return 0;
-        }
-    }
-    */
-
-	/**
-	 * Closes this operator.
-	 *
-	 * @return true if the operator is closed successfully.
-	 */
-	@Override
 	public boolean close() {
-		left.close();
-		right.close();
-		return super.close();
+		sortedLeft.close();
+		sortedRight.close();
+		return true;
 	}
+
 }
