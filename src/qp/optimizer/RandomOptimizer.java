@@ -94,7 +94,6 @@ public class RandomOptimizer {
             return node;
         } else if (node.getOpType() == OpType.DISTINCT) {
             Distinct operator = (Distinct) node;
-            System.out.println(numbuff + " at makeExuplan in Random optimiser");
             operator.setNumOfBuffer(numbuff);
             Operator base = makeExecPlan(operator.getBase());
             operator.setBase(base);
