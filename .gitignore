@@ -8,3 +8,15 @@ lib/
 .vscode/
 
 testcases/
+
+out/
+
+.DS_Store
+
+kujiji.iml
+
+COMPONENT.iml
+
+build.bat
+
+build.sh
