@@ -94,13 +94,18 @@ public class PlanCost {
         return calculateCost(node.getBase());
     }
 
-    /** What is cost of order by
-     * @param node
-     * @return
+    /** calculates the costs of a orderby operation; the cost should be the same as a external sort
+     * @param node the orderby operation
+     * @return the number of output tuples
      */
     protected long getStatistics(OrderBy node) {
-        //TODO!!
-        return calculateCost(node.getBase());
+        long outputTuples = getNumTuples();
+        int numOfTuplesInOnePage = Batch.getPageSize() / node.getBase().getSchema().getTupleSize();
+        long numOfPages = outputTuples / numOfTuplesInOnePage;
+        long numOfBuffer = BufferManager.getBuffersPerJoin();
+        cost += getExternalSortCost(numOfPages, numOfBuffer);
+
+        return outputTuples;
     }
 
     /**
@@ -301,7 +306,7 @@ public class PlanCost {
      * @return the number of tuples
      */
     private long getStatistics(Distinct node) {
-        long outputTuples = calculateCost(node.getBase());
+        long outputTuples = getNumTuples();
         int numOfTuplesInOnePage = Batch.getPageSize() / node.getBase().getSchema().getTupleSize();
         long numOfPages = outputTuples / numOfTuplesInOnePage;
         long numOfBuffer = BufferManager.getBuffersPerJoin();
