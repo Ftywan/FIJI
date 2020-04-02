@@ -16,17 +16,18 @@ public class BlockNestedJoin extends Join{
 	ArrayList<Integer> leftIndex;       // Indices of the join attributes in left table
 	ArrayList<Integer> rightIndex;      // Indices of the join attributes in right table
 	String rightFileName;               // The file name where the right table is materialized
-	Batch outputPage;                 // Buffer page for output
-	Batch leftInputPage;              // Buffer page for left input stream
-	Batch rightInputPage;             // Buffer page for right input stream
+	Batch outputPage;                   // Buffer page for output
+	Batch leftInputPage;                // Buffer page for left input stream
+	Batch rightInputPage;               // Buffer page for right input stream
 	ObjectInputStream in;               // File pointer to the right hand materialized file
-	ArrayList<Tuple> block;
+	ArrayList<Tuple> block;             // Structure to simulate the block that containing several pages
 
-	static int leftCursor;                     // Cursor for left side buffer
-	static int rightCursor;                    // Cursor for right side buffer
+	static int leftCursor;              // Cursor for left side block
+	static int rightCursor;             // Cursor for right side buffer
 	boolean endOfLeftStream;            // Whether end of stream (left table) is reached
 	boolean endOfRightStream;           // Whether end of stream (right table) is reached
 
+	// constructor similar to the Nested Join
 	public BlockNestedJoin(Join jn) {
 		super(jn.getLeft(), jn.getRight(), jn.getConditionList(), jn.getOpType());
 		schema = jn.getSchema();
@@ -34,6 +35,7 @@ public class BlockNestedJoin extends Join{
 		numBuff = jn.getNumBuff();
 	}
 
+	// initialization of the Block Nested Join
 	public boolean open() {
 		System.out.println("BNJ opening");
 		tupleSize = schema.getTupleSize();
@@ -42,6 +44,7 @@ public class BlockNestedJoin extends Join{
 		leftIndex = new ArrayList<>();
 		rightIndex = new ArrayList<>();
 
+		// loading of the join attributes into two lists of attributes
 		for (Condition condition : conditionList) {
 			Attribute leftAttribute = condition.getLhs();
 			Attribute rightAttribute = (Attribute) condition.getRhs();
@@ -49,6 +52,10 @@ public class BlockNestedJoin extends Join{
 			rightIndex.add(right.getSchema().indexOf(rightAttribute));
 		}
 
+		/** currently both the cursors are at the starting positions
+		 * the left stream is not to the end obviously
+		 * the next step of the right stream is 0 so the current status is end
+		 */
 		leftCursor = 0;
 		rightCursor = 0;
 		endOfLeftStream = false;
@@ -56,6 +63,7 @@ public class BlockNestedJoin extends Join{
 
 		block = new ArrayList<>();
 
+		// if the right table is not in the hard drive, materialize it
 		Batch materializePage;
 		if (! right.open()) {
 			return false;
@@ -69,7 +77,7 @@ public class BlockNestedJoin extends Join{
 				}
 				out.close();
 			} catch (IOException io){
-				System.out.println("BlockedNestedJoin: Error writing to temporary file");
+				System.out.println("BlockNestedJoin: Error writing to temporary file");
 				return false;
 			}
 			if (! right.close()) {
@@ -79,15 +87,19 @@ public class BlockNestedJoin extends Join{
 		return left.open();
 	}
 
+	// return the next tuple of joined results
 	public Batch next() {
 		int i, j;
 		System.out.println("next entered");
 		if (endOfLeftStream) {
 			return null;
 		}
-		outputPage = new Batch(batchSize);
+		outputPage = new Batch(batchSize); // the page for output
 		while (! outputPage.isFull()) {
-			/** a new block of data would be loaded **/
+			/** a new block of data would be loaded
+			 * only both are at the 0 position a new right page is needed to be read
+			 * before that we will check the join-able pairs in the so-far loaded tuples
+			 */
 			if (leftCursor == 0 && endOfRightStream == true) {
 				block.clear();
 				/** NumBuffer - 2 pages in the buffer is available for caching the left table **/
@@ -101,11 +113,17 @@ public class BlockNestedJoin extends Join{
 						break;
 					}
 				} // block loading finished
+
+				/**
+				 * end of left stream should not be triggered until there are no more tuples needed to be processed
+				 * so if unable to read any tuples in the block, change the status
+				 */
 				if (block.isEmpty()) {
 					endOfLeftStream = true;
 					return outputPage;
 				}
-				// initiate the reading for the right table
+
+				// initiate reading the right table for the current block
 				try {
 					System.out.println("BNJ: entering this loop");
 					in = new ObjectInputStream(new FileInputStream(rightFileName));
@@ -118,21 +136,21 @@ public class BlockNestedJoin extends Join{
 
 			// still under the progress of comparing the current left with the whole right table
 			while (endOfRightStream == false) {
-				System.out.println("eors set to false");
+				System.out.println("endOdRightStream set to false");
 				System.out.print("rightCursor is: ");
 				System.out.println(rightCursor);
 				try {
-					//if (rightCursor == 0 && leftCursor == 0) {
 					if (rightCursor == 0 && leftCursor == 0) {
 						rightInputPage = (Batch) in.readObject();
 					}
-					/** iterate through to find join-able pairs **/
+					/**
+					 * iterate through to find join-able pairs
+					 * the left range of iteration is expanded to block size
+					 */
 					for (i = leftCursor; i < block.size(); i ++) {
 						Tuple leftTuple = block.get(i);
 						for (j = rightCursor; j < rightInputPage.size(); j ++) {
 							Tuple rightTuple = rightInputPage.get(j);
-//							Debug.PPrint(leftTuple);
-//							Debug.PPrint(rightTuple);
 							if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex)) {
 								Tuple outTuple = leftTuple.joinWith(rightTuple);
 								outputPage.add(outTuple);
@@ -160,7 +178,7 @@ public class BlockNestedJoin extends Join{
 						rightCursor = 0;
 					}
 					leftCursor = 0;
-				} catch (EOFException e) {
+				} catch (EOFException e) { // the right table is all processed
 					try {
 						in.close();
 					} catch (IOException io ) {
@@ -182,7 +200,7 @@ public class BlockNestedJoin extends Join{
 	public boolean close() {
 		System.out.println("Closing BNL");
 		File f = new File(rightFileName);
-		f.delete();
+		f.delete(); // delete the intermediate table
 		return true;
 	}
 }
