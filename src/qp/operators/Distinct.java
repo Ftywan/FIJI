@@ -37,6 +37,8 @@ public class Distinct extends Operator {
      */
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
+        System.out.print("Distinct: ");
+        System.out.println(projected);
         sortedFile = new Sort(base, projected, numOfBuffer);
         return sortedFile.open(); // the file is now sorted and ready to use
     }

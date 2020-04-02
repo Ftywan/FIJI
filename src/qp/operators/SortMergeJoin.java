@@ -203,31 +203,6 @@ public class SortMergeJoin extends Join {
 		int compResult = 0;
 		Tuple next = null;
 
-		/*
-		//get next right tuple
-		if (rightBatch == null) {//if current rightBatch is already null, we can't get any rightPartition
-			return partition;
-		}
-		else if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
-			rightBatch = sortedRight.next(); //get next rightBatch
-			//System.out.println("SMJ: current rightBatch has reached the end");
-			if (rightBatch == null) { //if next rightBatch is null
-				return null; 
-			}
-			Debug.PPrint(rightBatch);
-			rcurs = 0;
-		}
-		//System.out.println("SMJ: Getting next right tuple from rightBatch");
-		next = rightBatch.get(rcurs);
-		//System.out.println("SMJ: Next right tuple is :");
-		//Debug.PPrint(next);
-		if (next == null) {
-			return null;
-		}
-		rcurs++;
-		compResult = 0;
-		*/
-
 		if (rightBatch == null || rightBatch.isEmpty()) {
 			return partition;
 		}

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
-import qp.utils.Tuple;
 
 /** TO DO:
  *  Update cost of OrderBy Operator!!!
@@ -22,7 +21,7 @@ import qp.utils.Tuple;
 public class OrderBy extends Operator {
     
     Operator base;
-    ArrayList<Attribute> as; // Set of attributes that are to be ordered
+    ArrayList<Attribute> projected; // Set of attributes that are to be ordered
 
     // Corresponding index of the attributes in above list
     // Use it to get the attributes from schema
@@ -39,20 +38,21 @@ public class OrderBy extends Operator {
     Batch inBatch = null;
     int inIndex = 0;
 
-    public OrderBy(Operator base, ArrayList<Attribute> as) {
+    public OrderBy(Operator base, ArrayList<Attribute> projected) {
         super(OpType.ORDERBY);
         this.base = base;
-        this.as = as;
+        this.projected = projected;
     }
-    /*
+    
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
-        for (int i = 0; i < as.size(); i++) {
-            Attribute attribute = (Attribute) as.get(i);
+        for (int i = 0; i < projected.size(); i++) {
+            Attribute attribute = (Attribute) projected.get(i);
             asIndices.add(schema.indexOf(attribute));
         }
-        sortedFile = new Sort(base, as, numBuff);
-        return sortedFile.open();
+        sortedFile = new Sort(base, projected, numBuff);
+        sortedFile.open();
+        return true;
     }
 
     public Batch next() {
@@ -63,10 +63,6 @@ public class OrderBy extends Operator {
             // Get a batch from sortedFile
             inBatch = sortedFile.next();
         }
-        // See if we are getting the correct tuples
-        //System.out.println("Getting inBatch from OrderBy");
-        //Debug.PPrint(inBatch);
-
 
         //Adding inBatch to outBatch until
 
@@ -87,7 +83,8 @@ public class OrderBy extends Operator {
         }
         return outBatch;
     }
-    */
+
+    /*
     //the code below is using the logic from Distinct, but no much difference.
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
@@ -127,6 +124,7 @@ public class OrderBy extends Operator {
 
         return out;
     }
+    */
 
     /**
      * Close the opened sort class in Sort
@@ -151,8 +149,8 @@ public class OrderBy extends Operator {
     public Object clone() {
         Operator newBase = (Operator) base.clone();
         ArrayList<Attribute> newProjectList = new ArrayList<>();
-        for (int i = 0; i < as.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) as.get(i)).clone();
+        for (int i = 0; i < projected.size(); i++) {
+            Attribute attribute = (Attribute) ((Attribute) projected.get(i)).clone();
             newProjectList.add(attribute);
         }
 

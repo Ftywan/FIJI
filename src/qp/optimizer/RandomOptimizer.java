@@ -100,7 +100,6 @@ public class RandomOptimizer {
             return node;
         } else if (node.getOpType() == OpType.ORDERBY) {
             OrderBy operator = (OrderBy) node;
-            System.out.println("Using Order By");
             operator.setNumOfBuffer(numbuff);
             Operator base = makeExecPlan(operator.getBase());
             operator.setBase(base);
