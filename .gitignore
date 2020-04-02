@@ -1,10 +1,9 @@
 
 .idea/
 
-classes/qp/operators/JoinType.class
+classes/
 
-*.class
-
+lib/
 
 .vscode/
 
