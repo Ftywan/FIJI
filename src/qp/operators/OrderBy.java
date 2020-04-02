@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
+import qp.utils.Tuple;
 
 /** TO DO:
  *  Update cost of OrderBy Operator!!!
@@ -43,14 +44,13 @@ public class OrderBy extends Operator {
         this.base = base;
         this.as = as;
     }
-
+    /*
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
         for (int i = 0; i < as.size(); i++) {
             Attribute attribute = (Attribute) as.get(i);
             asIndices.add(schema.indexOf(attribute));
         }
-
         sortedFile = new Sort(base, as, numBuff);
         return sortedFile.open();
     }
@@ -63,13 +63,13 @@ public class OrderBy extends Operator {
             // Get a batch from sortedFile
             inBatch = sortedFile.next();
         }
-        // See if we are geeting the correct tuples
+        // See if we are getting the correct tuples
         //System.out.println("Getting inBatch from OrderBy");
         //Debug.PPrint(inBatch);
 
-        /**
-         * Adding inBatch to outBatch until 
-         */
+
+        //Adding inBatch to outBatch until
+
         Batch outBatch = new Batch(batchSize);
         while (!outBatch.isFull()) {
             if (inBatch == null || inBatch.size() <= inIndex) {
@@ -86,6 +86,46 @@ public class OrderBy extends Operator {
             }
         }
         return outBatch;
+    }
+    */
+    //the code below is using the logic from Distinct, but no much difference.
+    public boolean open() {
+        batchSize  = Batch.getPageSize() / schema.getTupleSize();
+        sortedFile = new Sort(base, as, numBuff);
+        //Debug.PPrint(sortedFile);
+        return sortedFile.open(); // the file is now sorted and ready to use
+    }
+
+    public Batch next() {
+        if (eos) {
+            close();
+            return null;
+        } else if(inBatch == null) {
+            inBatch = sortedFile.next();
+        }
+        //Debug.PPrint(inBatch);
+        // add in the first tuple into the out batch because it is used as
+        // seed for duplication elimination.
+        Batch out = new Batch(batchSize);
+
+
+        while (!out.isFull()) {
+            if (inIndex >= inBatch.size()) {
+                eos = true;
+                break;
+            }
+
+            Tuple tuple = inBatch.get(inIndex);
+            out.add(tuple);
+            inIndex++;
+
+            if (inIndex == batchSize) {
+                inBatch = sortedFile.next();
+                inIndex = 0;
+            }
+        }
+
+        return out;
     }
 
     /**

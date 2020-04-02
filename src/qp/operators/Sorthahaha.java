@@ -6,30 +6,27 @@ import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.Vector;
 
+import org.w3c.dom.Attr;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Tuple;
 import qp.utils.TupleInRun;
 
-public class Sort extends Operator {
+public class Sorthahaha extends Operator {
     private final Operator base;
     private final int numOfBuffers;
-    private final ArrayList<Integer> sortKeyIndex = new ArrayList<>();
-    private final int batchSize;
+    private final ArrayList<Attribute> attributeArrayList;
+    private final int batchSize = Batch.getPageSize() / schema.getTupleSize();
     private ObjectInputStream sortedStream;
     private boolean eos = false;
 
-    public Sort(Operator base, ArrayList<Attribute> attr, int numOfBuffers) {
+    public Sorthahaha(Operator base, ArrayList<Attribute> attr, int numOfBuffers) {
         super(OpType.SORT);
         this.schema = base.schema;
         this.base = base;
         this.numOfBuffers = numOfBuffers;
-        this.batchSize = Batch.getPageSize() / schema.getTupleSize();
-        int idx = 0;
-        while (idx < attr.size()) {
-            Attribute attribute = (Attribute) attr.get(idx);
-            sortKeyIndex.add(schema.indexOf(attribute));
-        }
+        this.attributeArrayList = attr;
+
     }
 
     @Override
@@ -47,38 +44,50 @@ public class Sort extends Operator {
     }
 
     private int sortedRuns() {
+        int runs = 0;
         Batch inBatch = base.next();
-        int numOfRuns = 0;
-        while (inBatch != null) {
-            ArrayList<Tuple> tuples = new ArrayList<>();
+
+        while (!inBatch.isEmpty()) {
+            ArrayList<Tuple> tuplesToSort = new ArrayList<>();
             int i = 0;
-            while (i < numOfBuffers && inBatch != null) {
-                tuples.addAll(inBatch.getTuples());
+            // read the base batch by batch until all the available buffers have been taken up.
+            while (i < numOfBuffers) {
+                tuplesToSort.addAll(inBatch.getTuples());
+                // stop increment of buffer counter because there is no more buffer pages
+                // available to read more inBatch. we now need to perform in-memory sort and
+                // write the sorted run into outStream.
                 if (i != numOfBuffers - 1) {
                     inBatch = base.next();
                 }
+                i++;
             }
-            tuples.sort(this::compareTuples);
-            String fileName = runFileName(0,numOfRuns);
+            tuplesToSort.sort(this::compareTuples);
+            // the output filename.
+            String fileName = outFileName(0,runs);
             // ignore the error handling for now
-            ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(fileName));
-            for (Tuple tuple: tuples) {
-                stream.writeObject(tuple);
+            try {
+                ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(fileName));
+                for (Tuple tuple: tuplesToSort) {
+                    stream.writeObject(tuple);
+                }
+                stream.close();
+            } catch (IOException e) {
+                System.err.println("Cannot write the sorted file into disk because " + e.toString());
             }
-            stream.close();
 
+            // to open up the
             inBatch = base.next();
-            numOfRuns++;
+            runs++;
 
         }
-        return numOfRuns;
+        return runs;
     }
 
     private int mergeRuns(int numOfRuns, int passNum) {
         if (numOfRuns <= 1) {
             // ignore error handling here
             try {
-                String fileName = runFileName(passNum - 1, numOfRuns - 1);
+                String fileName = outFileName(passNum - 1, numOfRuns - 1);
                 sortedStream = new ObjectInputStream(new FileInputStream(fileName));
             } catch (FileNotFoundException e) {
                 System.out.println("Sort: cannot find the input file ");
@@ -103,18 +112,21 @@ public class Sort extends Operator {
     }
 
     private int compareTuples(Tuple t1, Tuple t2) {
-        for (int sortKey: sortKeyIndex) {
-            int result = Tuple.compareTuples(t1, t2, sortKey);
-            if (result != 0) {
-                return result;
+        int idx = 0;
+        // check on each sort index, if one of them is not 0, return the ordering immediately.
+        while (idx < attributeArrayList.size()) {
+            int sortIndex = schema.indexOf((Attribute) attributeArrayList.get(idx));
+            int res = Tuple.compareTuples(t1, t2, sortIndex);
+            if (res != 0) {
+                return res;
             }
+            idx++;
         }
-        return 0
+        return 0;
     }
 
 
-    private String runFileName(int passNum, int runNum) {
-
+    private String outFileName(int passNum, int runNum) {
         return "temp_" + passNum + "_" + runNum;
     }
 

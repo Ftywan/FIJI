@@ -6,3 +6,5 @@ classes/qp/operators/JoinType.class
 *.class
 
 COMPONENT.iml
+
+classes/

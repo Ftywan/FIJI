@@ -2,7 +2,6 @@ package qp.operators;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Vector;
 
 import qp.utils.Attribute;
 import qp.utils.Batch;
@@ -13,7 +12,7 @@ public class Distinct extends Operator {
     private final ArrayList<Attribute> projected;
     private Operator base;
     private Sort sortedFile;
-    private int batchSize = Batch.getPageSize() / schema.getTupleSize();;
+    private int batchSize;;
     private int numOfBuffer;
     private boolean eos = false;
     private Batch in = null;
@@ -27,6 +26,8 @@ public class Distinct extends Operator {
         super(OpType.DISTINCT);
         this.base = base;
         this.projected  = projected;
+
+
     }
 
     /**
@@ -35,6 +36,7 @@ public class Distinct extends Operator {
      * and output the sorted file for duplicate elimination.
      */
     public boolean open() {
+        batchSize  = Batch.getPageSize() / schema.getTupleSize();
         sortedFile = new Sort(base, projected, numOfBuffer);
         return sortedFile.open(); // the file is now sorted and ready to use
     }
@@ -46,14 +48,20 @@ public class Distinct extends Operator {
         } else if(in == null) {
             in = sortedFile.next();
         }
+        //Debug.PPrint(in);
         // add in the first tuple into the out batch because it is used as
         // seed for duplication elimination.
         Batch out = new Batch(batchSize);
         Tuple firstTuple = in.get(startIndex);
         out.add(firstTuple);
         startIndex++;
-        // i omitted the check on size < startindex, i think it is useless
-        while (!out.isFull() || !in.isEmpty()) {
+
+        while (!out.isFull()) {
+            if (startIndex >= in.size()) {
+                eos = true;
+                break;
+            }
+
             Tuple tuple = in.get(startIndex);
             boolean flag = true;
             for (int i = 0; i < projected.size(); i++) {
@@ -69,12 +77,14 @@ public class Distinct extends Operator {
                 out.add(tuple);
             }
             startIndex++;
+
+            if (startIndex == batchSize) {
+                in = sortedFile.next();
+                startIndex = 0;
+            }
         }
 
-        if (startIndex == batchSize) {
-            in = sortedFile.next();
-            startIndex = 0;
-        }
+
 
         return out;
     }
@@ -82,6 +92,16 @@ public class Distinct extends Operator {
     @Override
     public boolean close() {
         return sortedFile.close();
+    }
+
+    public Operator getBase() {
+        return base;
+    }
+    public void setBase(Operator base) {
+        this.base = base;
+    }
+    public void setNumOfBuffer(int numOfBuffer) {
+        this.numOfBuffer = numOfBuffer;
     }
 
     public Object clone() {

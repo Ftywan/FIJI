@@ -100,13 +100,11 @@ public class QueryMain {
                     e.printStackTrace();
                 }
             } else numBuff = Integer.parseInt(args[3]);
-            System.out.println(numBuff + " at QueryMain 1");
             BufferManager bm = new BufferManager(numBuff, sqlquery.getNumJoin());
         }
 
         /** Check the number of buffers available is enough or not **/
         int numBuff = BufferManager.getBuffersPerJoin();
-        System.out.println(numBuff + " at QueryMain 2");
         if (sqlquery.getNumJoin() > 0 && numBuff < 3) {
             System.out.println("Minimum 3 buffers are required per join operator ");
             System.exit(1);
