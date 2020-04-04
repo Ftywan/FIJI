@@ -102,7 +102,7 @@ public class PlanCost {
         long outputTuples = getNumTuples();
         int numOfTuplesInOnePage = Batch.getPageSize() / node.getBase().getSchema().getTupleSize();
         long numOfPages = outputTuples / numOfTuplesInOnePage;
-        long numOfBuffer = BufferManager.getBuffersPerJoin();
+        long numOfBuffer = BufferManager.getNumBuffer();
         cost += getExternalSortCost(numOfPages, numOfBuffer);
 
         return outputTuples;
@@ -309,7 +309,7 @@ public class PlanCost {
         long outputTuples = getNumTuples();
         int numOfTuplesInOnePage = Batch.getPageSize() / node.getBase().getSchema().getTupleSize();
         long numOfPages = outputTuples / numOfTuplesInOnePage;
-        long numOfBuffer = BufferManager.getBuffersPerJoin();
+        long numOfBuffer = BufferManager.getNumBuffer();
         cost += (getExternalSortCost(numOfPages, numOfBuffer) + numOfPages);
         return outputTuples;
     }

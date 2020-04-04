@@ -32,7 +32,6 @@ public class RandomOptimizer {
     /**
      * constructor
      **/
-
     public RandomOptimizer(SQLQuery sqlquery) {
         this.sqlquery = sqlquery;
     }
@@ -43,14 +42,15 @@ public class RandomOptimizer {
      * * corresponding join operator implementation
      **/
     public static Operator makeExecPlan(Operator node) {
-        int numbuff = BufferManager.getBuffersPerJoin();
+        // for join operation
         if (node.getOpType() == OpType.JOIN) {
             Operator left = makeExecPlan(((Join) node).getLeft());
             Operator right = makeExecPlan(((Join) node).getRight());
             int joinType = ((Join) node).getJoinType();
-            //int numbuff = BufferManager.getBuffersPerJoin();
+            int numbuff = BufferManager.getBuffersPerJoin();
             switch (joinType) {
                 case JoinType.NESTEDJOIN:
+                    System.out.println("Page Nested Join");
                     NestedJoin nj = new NestedJoin((Join) node);
                     nj.setLeft(left);
                     nj.setRight(right);
@@ -58,7 +58,7 @@ public class RandomOptimizer {
                     return nj;
 
                 case JoinType.BLOCKNESTED:
-                    System.out.println("BlockNested Joining");
+                    System.out.println("Block Nested Join");
                     BlockNestedJoin bj = new BlockNestedJoin((Join) node);
                     bj.setLeft(left);
                     bj.setRight(right);
@@ -74,7 +74,7 @@ public class RandomOptimizer {
                     hj.setNumBuff(numbuff);
                     return hj;
                 case JoinType.SORTMERGE:
-                    System.out.println("SortMerge Joining");
+                    System.out.println("SortMerge Join");
                     SortMergeJoin sj = new SortMergeJoin((Join) node);
                     sj.setLeft(left);
                     sj.setRight(right);
@@ -93,16 +93,21 @@ public class RandomOptimizer {
             ((Project) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.DISTINCT) {
-            Distinct operator = (Distinct) node;
-            operator.setNumOfBuffer(numbuff);
-            Operator base = makeExecPlan(operator.getBase());
-            operator.setBase(base);
+            // TODO: verify the validity of this change
+//            Distinct operator = (Distinct) node;
+//            operator.setNumOfBuffer(numbuff); // configuring the buffer size has been moved to the constructor
+//            Operator base = makeExecPlan(operator.getBase());
+//            operator.setBase(base);
+            Operator base = makeExecPlan(((Distinct) node).getBase());
+            ((Distinct) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.ORDERBY) {
-            OrderBy operator = (OrderBy) node;
-            operator.setNumOfBuffer(numbuff);
-            Operator base = makeExecPlan(operator.getBase());
-            operator.setBase(base);
+//            OrderBy operator = (OrderBy) node;
+//            operator.setNumOfBuffer(numbuff);
+//            Operator base = makeExecPlan(operator.getBase());
+//            operator.setBase(base);
+            Operator base = makeExecPlan(((OrderBy) node).getBase());
+            ((OrderBy) node).setBase(base);
             return node;
         } else {
             return node;

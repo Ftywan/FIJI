@@ -2,6 +2,7 @@ package qp.operators;
 
 import java.util.ArrayList;
 
+import qp.optimizer.BufferManager;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
@@ -42,6 +43,7 @@ public class OrderBy extends Operator {
         super(OpType.ORDERBY);
         this.base = base;
         this.projected = projected;
+        numBuff = BufferManager.getNumBuffer();
     }
     
     public boolean open() {

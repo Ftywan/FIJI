@@ -3,6 +3,7 @@ package qp.operators;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
+import qp.optimizer.BufferManager;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
@@ -26,8 +27,7 @@ public class Distinct extends Operator {
         super(OpType.DISTINCT);
         this.base = base;
         this.projected  = projected;
-
-
+        numOfBuffer = BufferManager.getNumBuffer();
     }
 
     /**
