@@ -4,6 +4,7 @@
 
 package qp.optimizer;
 
+import com.sun.deploy.perf.PerfLabel;
 import qp.operators.*;
 import qp.utils.Attribute;
 import qp.utils.Condition;
@@ -20,6 +21,13 @@ public class RandomOptimizer {
     public static final int METHODCHOICE = 0;  // Selecting neighbor by changing a method for an operator
     public static final int COMMUTATIVE = 1;   // By rearranging the operators by commutative rule
     public static final int ASSOCIATIVE = 2;   // Rearranging the operators by associative rule
+
+    /**
+     * constants that needed for the SA algorithm
+     */
+    private static final double TEMPERATUREFACTOR = 0.1;
+    private static final double TEMPERATUREREDUCTIONFACTOR = 0.95;
+    private static final int EQUILIBRIUMFACTOR = 16;
 
     /**
      * Number of altenative methods available for a node as specified above
@@ -138,9 +146,19 @@ public class RandomOptimizer {
     }
 
     /**
+     * Implementation of the 2 Phase Optimization with Iterative Improvement and the Simulated Annealing Algorithm
+     */
+    public Operator getOptimizedPlan() {
+        Operator phaseOne = runIIOptimization();
+        Operator phaseTwo = runSAOptimization(phaseOne);
+
+        return phaseTwo;
+    }
+
+    /**
      * Implementation of Iterative Improvement Algorithm for Randomized optimization of Query Plan
      **/
-    public Operator getOptimizedPlan() {
+    public Operator runIIOptimization() {
         /** get an initial plan for the given sql query **/
         RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
         numJoin = rip.getNumJoins();
@@ -171,12 +189,15 @@ public class RandomOptimizer {
             boolean flag = true;
             long minNeighborCost = initCost;   //just initialization purpose;
             Operator minNeighbor = initPlan;  //just initialization purpose;
+
+            // looking for the local minimum
             if (numJoin != 0) {
                 while (flag) {  // flag = false when local minimum is reached
                     System.out.println("---------------while--------");
                     Operator initPlanCopy = (Operator) initPlan.clone();
                     minNeighbor = getNeighbor(initPlanCopy);
 
+                    // initialize a neighbor cost with a random neighbor
                     System.out.println("--------------------------neighbor---------------");
                     Debug.PPrint(minNeighbor);
                     pc = new PlanCost();
@@ -230,6 +251,46 @@ public class RandomOptimizer {
         Debug.PPrint(finalPlan);
         System.out.println("  " + MINCOST);
         return finalPlan;
+    }
+
+    /**
+     * Implementation of Simulated Annealing Algorithm for Randomized optimization of Query Plan
+     **/
+    public Operator runSAOptimization(Operator initialPlan) {
+        Operator currentPlan = initialPlan;
+        Operator minCostPlan = currentPlan;
+        PlanCost initialCost = new PlanCost();
+        long minCost = initialCost.getCost(currentPlan);
+        double temperature = TEMPERATUREFACTOR * minCost;
+        int stableTime = 0;
+        int equilibrium = EQUILIBRIUMFACTOR * numJoin;
+
+        while (temperature >= 1 && stableTime <= 4) {
+            for (int i = 0; i < equilibrium; i ++) {
+                Operator neighborPlan = getNeighbor((Operator) currentPlan.clone());
+                System.out.println("---------------SA Neighbor---------------");
+                Debug.PPrint(neighborPlan);
+                PlanCost neighborCost = new PlanCost();
+                PlanCost currentCost = new PlanCost();
+                long deltaCost = neighborCost.getCost(neighborPlan) - currentCost.getCost(currentPlan);
+
+                if (deltaCost <= 0) {
+                    currentPlan = neighborPlan;
+                }
+                if (deltaCost > 0) {
+                    double probability = Math.exp(-(deltaCost / temperature));
+                    if (Math.random() < probability) {
+                        currentPlan = neighborPlan;
+                    }
+                }
+                currentCost = new PlanCost();
+                if (currentCost.getCost(currentPlan) < minCost) {
+                    minCostPlan = neighborPlan;
+                }
+            }
+            temperature *= TEMPERATUREREDUCTIONFACTOR;
+        }
+        return minCostPlan;
     }
 
     /**
