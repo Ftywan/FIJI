@@ -11,7 +11,7 @@ import qp.utils.Condition;
 
 import java.util.ArrayList;
 
-public class SortMergeJoinOriginal extends Join {
+public class SortMergeJoin extends Join {
 	// The number of tuples per output batch.
 	private int batchSize;
 
@@ -57,7 +57,7 @@ public class SortMergeJoinOriginal extends Join {
 	 *
 	 * @param jn is the base join operator.
 	 */
-	public SortMergeJoinOriginal(Join jn) {
+	public SortMergeJoin(Join jn) {
 		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
 		schema = jn.getSchema();
 		jointype = jn.getJoinType();

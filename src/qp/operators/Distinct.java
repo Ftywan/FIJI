@@ -21,6 +21,7 @@ public class Distinct extends Operator {
     private boolean eos = false;
     private Batch in = null;
     private int batchIndex = 0;
+    private Tuple lastTuple = null; // To keep track of lastTuple
 
 
     /**
@@ -78,7 +79,7 @@ public class Distinct extends Operator {
                 break;
             }
 
-            Tuple lastTuple = currentTuple;
+            lastTuple = currentTuple;
             currentTuple = in.get(batchIndex);
             int compareResult = Tuple.compareTuples(currentTuple, lastTuple, projectedIndices, projectedIndices);
             if (compareResult != 0) {
