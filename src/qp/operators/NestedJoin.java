@@ -116,8 +116,8 @@ public class NestedJoin extends Join {
                     eosl = true;
                     return outbatch;
                 }
-                System.out.println("NL: Read in right Page");
-                Debug.PPrint(leftbatch);
+                //System.out.println("NL: Read in right Page");
+                //Debug.PPrint(leftbatch);
                 /** Whenever a new left page came, we have to start the
                  ** scanning of right table
                  **/
@@ -130,8 +130,8 @@ public class NestedJoin extends Join {
                     System.exit(1);
                 }
             }
-            System.out.println("NL: endOfRightStream is ");
-            System.out.println(eosr);
+            //System.out.println("NL: endOfRightStream is ");
+            //System.out.println(eosr);
 
             while (eosr == false) {
                 try {

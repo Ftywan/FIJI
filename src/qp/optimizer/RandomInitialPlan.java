@@ -206,6 +206,7 @@ public class RandomInitialPlan {
             operator.setSchema(root.getSchema());
             root = operator;
         }
+        return;
     }
 
     private void modifyHashtable(Operator old, Operator newop) {
@@ -218,7 +219,7 @@ public class RandomInitialPlan {
 
     /**
      * Creates a distinct operator: 
-     * TODO: CHANGE THIS!!!!
+     * TODO: CHANGE THIS!!!! Should be correct, will come back
      */
     private void createDistinctOperator() {
         if (!sqlquery.getisDistinct()) {

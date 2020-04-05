@@ -17,12 +17,12 @@ import qp.utils.Schema;
  *  In close(): close the sorted file
  */
 
- //TODO: Add in those exception catch!
+ //TODO: Add in those exception catch! 看起来好像没有什么error要catch????
 
 public class OrderBy extends Operator {
     
     Operator base;
-    ArrayList<Attribute> projected; // Set of attributes that are to be ordered
+    ArrayList<Attribute> orderedlist; // Set of attributes that are to be ordered
 
     // Corresponding index of the attributes in above list
     // Use it to get the attributes from schema
@@ -39,20 +39,20 @@ public class OrderBy extends Operator {
     Batch inBatch = null;
     int inIndex = 0;
 
-    public OrderBy(Operator base, ArrayList<Attribute> projected) {
+    public OrderBy(Operator base, ArrayList<Attribute> orderedlist) {
         super(OpType.ORDERBY);
         this.base = base;
-        this.projected = projected;
+        this.orderedlist = orderedlist;
         numBuff = BufferManager.getNumBuffer();
     }
     
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
-        for (int i = 0; i < projected.size(); i++) {
-            Attribute attribute = (Attribute) projected.get(i);
+        for (int i = 0; i < orderedlist.size(); i++) {
+            Attribute attribute = (Attribute) orderedlist.get(i);
             asIndices.add(schema.indexOf(attribute));
         }
-        sortedFile = new Sort(base, projected, numBuff);
+        sortedFile = new Sort(base, orderedlist, numBuff);
         sortedFile.open();
         return true;
     }
@@ -86,48 +86,6 @@ public class OrderBy extends Operator {
         return outBatch;
     }
 
-    /*
-    //the code below is using the logic from Distinct, but no much difference.
-    public boolean open() {
-        batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        sortedFile = new Sort(base, as, numBuff);
-        //Debug.PPrint(sortedFile);
-        return sortedFile.open(); // the file is now sorted and ready to use
-    }
-
-    public Batch next() {
-        if (eos) {
-            close();
-            return null;
-        } else if(inBatch == null) {
-            inBatch = sortedFile.next();
-        }
-        //Debug.PPrint(inBatch);
-        // add in the first tuple into the out batch because it is used as
-        // seed for duplication elimination.
-        Batch out = new Batch(batchSize);
-
-
-        while (!out.isFull()) {
-            if (inIndex >= inBatch.size()) {
-                eos = true;
-                break;
-            }
-
-            Tuple tuple = inBatch.get(inIndex);
-            out.add(tuple);
-            inIndex++;
-
-            if (inIndex == batchSize) {
-                inBatch = sortedFile.next();
-                inIndex = 0;
-            }
-        }
-
-        return out;
-    }
-    */
-
     /**
      * Close the opened sort class in Sort
      */
@@ -150,13 +108,13 @@ public class OrderBy extends Operator {
 
     public Object clone() {
         Operator newBase = (Operator) base.clone();
-        ArrayList<Attribute> newProjectList = new ArrayList<>();
-        for (int i = 0; i < projected.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) projected.get(i)).clone();
-            newProjectList.add(attribute);
+        ArrayList<Attribute> newOrderByList = new ArrayList<>();
+        for (int i = 0; i < orderedlist.size(); i++) {
+            Attribute attribute = (Attribute) ((Attribute) orderedlist.get(i)).clone();
+            newOrderByList.add(attribute);
         }
 
-        OrderBy newOrderBy = new OrderBy(newBase, newProjectList);
+        OrderBy newOrderBy = new OrderBy(newBase, newOrderByList);
         Schema newSchema = newBase.getSchema();
         newOrderBy.setSchema(newSchema);
         return newOrderBy;
