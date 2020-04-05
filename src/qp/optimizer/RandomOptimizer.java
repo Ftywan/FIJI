@@ -4,7 +4,6 @@
 
 package qp.optimizer;
 
-import com.sun.deploy.perf.PerfLabel;
 import qp.operators.*;
 import qp.utils.Attribute;
 import qp.utils.Condition;
