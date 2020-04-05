@@ -19,4 +19,4 @@ COMPONENT.iml
 
 build.bat
 
-build.sh
+#build.sh
