@@ -1,7 +1,7 @@
 
 .idea/
 
-classes/
+#classes/
 
 #lib/
 
@@ -9,11 +9,11 @@ classes/
 
 testcases/
 
-out/
+#out/
 
 .DS_Store
 
-kujiji.iml
+#kujiji.iml
 
 COMPONENT.iml
 
