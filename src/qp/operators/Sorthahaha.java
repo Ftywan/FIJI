@@ -19,6 +19,7 @@ public class Sorthahaha extends Operator {
     private final int batchSize = Batch.getPageSize() / schema.getTupleSize();
     private ObjectInputStream sortedStream;
     private boolean eos = false;
+    private int fileNum;
 
     public Sorthahaha(Operator base, ArrayList<Attribute> attr, int numOfBuffers) {
         super(OpType.SORT);
@@ -34,19 +35,22 @@ public class Sorthahaha extends Operator {
         if (!base.open()) {
             return false;
         }
+        /*
         int numOfRuns = sortedRuns();
         if (mergeRuns(numOfRuns, 1) ==1) {
             return true;
         } else {
             return false;
-        }
-
+        }*/
+        int i = sortedRuns(); //generate sorted runs
+        merge(i); //merge sorted runs
+        return true;
     }
 
     private int sortedRuns() {
+        // the runs here denotes the number of files generates
         int runs = 0;
         Batch inBatch = base.next();
-
         while (!inBatch.isEmpty()) {
             ArrayList<Tuple> tuplesToSort = new ArrayList<>();
             int i = 0;
@@ -83,33 +87,131 @@ public class Sorthahaha extends Operator {
         return runs;
     }
 
-    private int mergeRuns(int numOfRuns, int passNum) {
-        if (numOfRuns <= 1) {
-            // ignore error handling here
+    private void merge(int fileNum) {
+        // one while loop represent on pass of the merging process.
+        // after one pass, the merged files will be stored and fileNum will reduced
+        int pass = 0;
+        while (fileNum > 1) {
             try {
-                String fileName = outFileName(passNum - 1, numOfRuns - 1);
-                sortedStream = new ObjectInputStream(new FileInputStream(fileName));
-            } catch (FileNotFoundException e) {
-                System.out.println("Sort: cannot find the input file ");
+                fileNum = mergeIntermediate(fileNum, pass);
             } catch (IOException e) {
-                System.out.println("Sort: cannot output the file due to " + e.toString());
+                System.err.printf("mergeIntermediate function does not work for pass = %d and filenum = %d\n ", pass, fileNum);
             }
-            return numOfRuns;
+            pass++;
         }
 
-        int outputRuns = 0;
-        int start = 0;
-        while (start < numOfRuns) {
-            int end = Math.min(start + numOfBuffers - 1, numOfRuns);
-            merge(start, end,passNum,outputRuns);
-            outputRuns++;
-            start += numOfBuffers - 1;
+        if (fileNum <= 1) {
+            String fileName = outFileName(pass, fileNum-1);
+            try {
+                sortedStream = new ObjectInputStream(new FileInputStream(fileName));
+            } catch (IOException e) {
+                System.err.printf("cannot write out the sorted file because %s\n" + e.toString());
+            }
         }
-        return mergeRuns(outputRuns, passNum + 1);
+        //catch some errors????
     }
-    private void merge(int start, int end, int passNum, int output) {
+    // take in # of runs from the previous pass, and output the # of sorted runs of current pass
+    // # of pass
+    private int mergeIntermediate(int preFileNum, int pass) throws IOException {
+        int fileNum = 0;
+        for (int start = 0; start < preFileNum; start += numOfBuffers) {
+            int end = Math.min(start + numOfBuffers-1, preFileNum);
+            // merge sorted runs from start to end.
+            // now you have your start and your end, you want to merge them now.
+            // first: load the data from the corresponding file into your memory
+            // second: put everything from memory into pq
+            // poll them one by one in the queue until queue is empty
+            // third: reload the files pages into memory again.
+
+            // now we first load data into memory as much as possible
+            // until all the buffers are fully loaded
+            Batch[] ins = new Batch[end - start];
+            boolean[] endFlag = new boolean[end - start];
+            ObjectInputStream[] inStreams = new ObjectInputStream[end - start];
+            for (int i = start; i < end; i++) {
+                String fileName = outFileName(pass - 1, i);
+                ObjectInputStream inStream = new ObjectInputStream(new FileInputStream(fileName));
+                inStreams[i - start] = inStream;
+                Batch in = new Batch(batchSize);
+                while (!in.isFull()) {
+                    Tuple tuple = null;
+                    try {
+                        tuple = (Tuple) inStream.readObject();
+                    } catch (EOFException e) {
+                        break;
+                    } catch (ClassNotFoundException e) {
+                        System.err.printf("cannot load data into buffer due to %s\n", e.toString());
+                    }
+                    in.add(tuple);
+                }
+                ins[i - start] = in;
+            }
+            //put everything from buffer into pq.
+            PriorityQueue<TupleInRun> pq = new PriorityQueue<>(batchSize, (t1, t2) -> compareTuples(t1.tuple, t2.tuple));
+            // name the output merged file with current pass number and file numeber;
+            // create the corresponding outStream for continuous data flow;
+            String outFileName = outFileName(pass, fileNum);
+            ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(outFileName));
+            // put the first tuple in each buffer(in) into the pq so that we can find the
+            // min of the remaining tuples each time.
+            int idx = 0;
+            while (idx < end - start) {
+                Batch in = ins[idx];
+                if (in == null || in.isEmpty()) {
+                    endFlag[idx] = true;
+                    continue;
+                }
+                Tuple tpl = in.get(0);
+                pq.add(new TupleInRun(tpl, idx, 0));
+                idx++;
+            }
+            //now there are (n-1) tuples in the qp and you can start the loop
+            // to continuously output the smallest tuple.
+            while (!pq.isEmpty()) {
+                TupleInRun tpl = pq.poll();
+                outStream.writeObject(tpl.tuple);
+                // now we look for the replacement of the tuple
+                // that have been popped in the above line. This is done by find the
+                // where the tuples comes from. if the buffer it comes from has tuple left,
+                // put the next one into pq,
+                int nextInID = tpl.runID;
+                int nextIdx = tpl.tupleID + 1;
+                // if the tuple it comes from is alr empty, then you go to its corresponding inStream and
+                // input another batch of data until the buffer page  is full again.
+                if (nextIdx == batchSize) {
+                    Batch in = new Batch(batchSize);
+                    while (!in.isFull()) {
+                        try {
+                            Tuple data = (Tuple) inStreams[nextInID].readObject();
+                            in.add(data);
+                        } catch (EOFException eof) {
+                            break;
+                        }
+                    }
+                    //when the buffer is fully loaded, assign it to our buffer pool
+                    ins[nextInID] = in;
+
+                    // Resets the index for that input buffer to be 0.
+                    nextIdx = 0;
+                }
+                // now we have alr locate the next tuple to put into pq
+                Batch in = ins[nextInID];
+                if (in == null || in.size() <= nextIdx) {
+                    endFlag[nextInID] = true;
+                    continue;
+                }
+            }
+            fileNum++;
+            for (ObjectInputStream inStream : inStreams) {
+                inStream.close();
+            }
+            outStream.close();
+        }
+        return fileNum;
 
     }
+
+
 
     private int compareTuples(Tuple t1, Tuple t2) {
         int idx = 0;
@@ -136,6 +238,24 @@ public class Sorthahaha extends Operator {
             return null;
         }
 
+        Batch out = new Batch(batchSize);
+        while (!out.isFull()) {
+            try {
+                Tuple data = (Tuple) sortedStream.readObject();
+                out.add(data);
+            } catch (ClassNotFoundException cnf) {
+                System.err.printf("Sort: class not found for reading from sortedStream due to %s\n", cnf.toString());
+                System.exit(1);
+            } catch (EOFException EOF) {
+                // Sends the incomplete page and close in the next call.
+                eos = true;
+                return out;
+            } catch (IOException e) {
+                System.err.printf("Sort: error reading from sortedStream due to %s\n", e.toString());
+                System.exit(1);
+            }
+        }
+        return out;
 
 
     }
@@ -146,7 +266,9 @@ public class Sorthahaha extends Operator {
             sortedStream.close();
         } catch (IOException e) {
             System.err.println("Cannot close sortedStream " + e.toString());
+            return false;
         }
+        return true;
     }
 
 

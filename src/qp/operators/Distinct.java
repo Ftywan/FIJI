@@ -48,7 +48,7 @@ public class Distinct extends Operator {
         } else if(in == null) {
             in = sortedFile.next();
         }
-        Debug.PPrint(in);
+        //Debug.PPrint(in);
         // add in the first tuple into the out batch because it is used as
         // seed for duplication elimination.
         Batch out = new Batch(batchSize);

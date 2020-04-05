@@ -248,6 +248,9 @@ public class Sort extends Operator {
 
             // Inserts the next element into the output heap if that input buffer is not empty.
             Batch inBatch = inBatches[nextBatchID];
+            // this is too handle the case where the last inStream is sometimes shorter
+            // then all the previous stream, Hence, when the last few data is load into buffer,
+            // they do not occupy the buffer fully. so size < index;
             if (inBatch == null || inBatch.size() <= nextIndex) {
                 inEos[nextBatchID] = true;
                 continue;
