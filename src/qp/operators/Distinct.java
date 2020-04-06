@@ -43,7 +43,7 @@ public class Distinct extends Operator {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
         //System.out.print("Distinct: ");
         //System.out.println(projectedlist);
-        sortedFile = new Sort(base, projectedlist, numOfBuffer);
+        sortedFile = new SortOriginal(base, projectedlist, numOfBuffer);
 
         Schema baseSchema = base.getSchema();
         for (int i = 0; i < projectedlist.size(); ++i) {

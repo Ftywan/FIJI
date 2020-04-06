@@ -17,7 +17,7 @@ import qp.utils.Schema;
  *  In close(): close the sorted file
  */
 
- //TODO: Add in those exception catch! 看起来好像没有什么error要catch????
+ //TODO: Add in those exception catch! seems like nothing to catch?
 
 public class OrderBy extends Operator {
     
@@ -34,7 +34,7 @@ public class OrderBy extends Operator {
     // How many buffers are available for performing this operation
     // Get the numBuff for External Sort
     int numBuff;
-    SortOriginal sortedFile;
+    Sort sortedFile;
     boolean eos = false;
     Batch inBatch = null;
     int inIndex = 0;

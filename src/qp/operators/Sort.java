@@ -16,7 +16,7 @@ public class Sort extends Operator {
     private final Operator base;
     private final int numOfBuffers;
     private final ArrayList<Attribute> attributeArrayList;
-    private final int batchSize = Batch.getPageSize() / schema.getTupleSize();
+    private final int batchSize;
     private ObjectInputStream sortedStream;
     private boolean eos = false;
     private int fileNum;
@@ -27,6 +27,7 @@ public class Sort extends Operator {
         this.base = base;
         this.numOfBuffers = numOfBuffers;
         this.attributeArrayList = attr;
+        this.batchSize = Batch.getPageSize() / schema.getTupleSize();
 
     }
 
@@ -51,11 +52,11 @@ public class Sort extends Operator {
         // the runs here denotes the number of files generates
         int runs = 0;
         Batch inBatch = base.next();
-        while (!inBatch.isEmpty()) {
+        while (inBatch != null) {
             ArrayList<Tuple> tuplesToSort = new ArrayList<>();
             int i = 0;
             // read the base batch by batch until all the available buffers have been taken up.
-            while (i < numOfBuffers) {
+            while (i < numOfBuffers && inBatch != null) {
                 tuplesToSort.addAll(inBatch.getTuples());
                 // stop increment of buffer counter because there is no more buffer pages
                 // available to read more inBatch. we now need to perform in-memory sort and
@@ -93,11 +94,12 @@ public class Sort extends Operator {
         int pass = 0;
         while (fileNum > 1) {
             try {
-                fileNum = mergeIntermediate(fileNum, pass);
-            } catch (IOException e) {
-                System.err.printf("mergeIntermediate function does not work for pass = %d and filenum = %d\n ", pass, fileNum);
+                fileNum = mergeIntermediate(fileNum, pass + 1);
+            } catch (Exception e) {
+                System.err.printf("mergeIntermediate function does not work for pass = %d and filenum = %d\n ", pass, fileNum, e.toString());
             }
             pass++;
+            System.out.println(pass + " merge finished");
         }
 
         if (fileNum <= 1) {
@@ -105,14 +107,14 @@ public class Sort extends Operator {
             try {
                 sortedStream = new ObjectInputStream(new FileInputStream(fileName));
             } catch (IOException e) {
-                System.err.printf("cannot write out the sorted file because %s\n" + e.toString());
+                System.err.printf("cannot write out the sorted file=%s because %s\n", fileName, e.toString());
             }
         }
         //catch some errors????
     }
     // take in # of runs from the previous pass, and output the # of sorted runs of current pass
     // # of pass
-    private int mergeIntermediate(int preFileNum, int pass) throws IOException {
+    private int mergeIntermediate(int preFileNum, int pass) {
         int fileNum = 0;
         for (int start = 0; start < preFileNum; start += numOfBuffers) {
             int end = Math.min(start + numOfBuffers-1, preFileNum);
@@ -130,7 +132,12 @@ public class Sort extends Operator {
             ObjectInputStream[] inStreams = new ObjectInputStream[end - start];
             for (int i = start; i < end; i++) {
                 String fileName = outFileName(pass - 1, i);
-                ObjectInputStream inStream = new ObjectInputStream(new FileInputStream(fileName));
+                ObjectInputStream inStream = null;
+                try {
+                    inStream = new ObjectInputStream(new FileInputStream(fileName));
+                } catch (IOException e) {
+                    System.err.printf("mergeintermediate cannot find the file %s to put into memory due to %s\n", fileName, e.toString());
+                }
                 inStreams[i - start] = inStream;
                 Batch in = new Batch(batchSize);
                 while (!in.isFull()) {
@@ -140,6 +147,8 @@ public class Sort extends Operator {
                     } catch (EOFException e) {
                         break;
                     } catch (ClassNotFoundException e) {
+                        System.err.printf("cannot load data into buffer due to %s\n", e.toString());
+                    } catch (IOException e) {
                         System.err.printf("cannot load data into buffer due to %s\n", e.toString());
                     }
                     in.add(tuple);
@@ -151,7 +160,12 @@ public class Sort extends Operator {
             // name the output merged file with current pass number and file numeber;
             // create the corresponding outStream for continuous data flow;
             String outFileName = outFileName(pass, fileNum);
-            ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(outFileName));
+            ObjectOutputStream outStream = null;
+            try {
+                outStream = new ObjectOutputStream(new FileOutputStream(outFileName));
+            } catch (IOException e) {
+                System.err.printf("cannot output from pq to outStream (%s) due to %s\n", outFileName, e.toString());
+            }
             // put the first tuple in each buffer(in) into the pq so that we can find the
             // min of the remaining tuples each time.
             int idx = 0;
@@ -169,7 +183,12 @@ public class Sort extends Operator {
             // to continuously output the smallest tuple.
             while (!pq.isEmpty()) {
                 TupleInRun tpl = pq.poll();
-                outStream.writeObject(tpl.tuple);
+                try {
+                    Debug.PPrint(tpl.tuple);
+                    outStream.writeObject(tpl.tuple);
+                } catch (IOException e) {
+                    System.err.printf("the min tuple cannot be put into outStream due to %s\n", e.toString());
+                }
                 // now we look for the replacement of the tuple
                 // that have been popped in the above line. This is done by find the
                 // where the tuples comes from. if the buffer it comes from has tuple left,
@@ -186,6 +205,10 @@ public class Sort extends Operator {
                             in.add(data);
                         } catch (EOFException eof) {
                             break;
+                        } catch (ClassNotFoundException e) {
+                            System.err.printf("cannot load the data into buffer due to %s\n", e.toString());
+                        } catch (IOException e) {
+                            System.err.printf("cannot load the data into buffer due to %s\n", e.toString());
                         }
                     }
                     //when the buffer is fully loaded, assign it to our buffer pool
@@ -196,16 +219,30 @@ public class Sort extends Operator {
                 }
                 // now we have alr locate the next tuple to put into pq
                 Batch in = ins[nextInID];
+                // this is too handle the case where the last inStream is sometimes shorter
+                // then all the previous stream, Hence, when the last few data is load into buffer,
+                // they do not occupy the buffer fully. so size < index;
                 if (in == null || in.size() <= nextIdx) {
                     endFlag[nextInID] = true;
                     continue;
                 }
+                Tuple nextTuple = in.get(nextIdx);
+                pq.add(new TupleInRun(nextTuple, nextInID, nextIdx));
+
             }
             fileNum++;
             for (ObjectInputStream inStream : inStreams) {
-                inStream.close();
+                try {
+                    inStream.close();
+                } catch (IOException e) {
+                    System.err.printf("cannot close the inStream in start=%d, end = %d due to %s\n", start, end, e.toString());
+                }
             }
-            outStream.close();
+            try {
+                outStream.close();
+            } catch (IOException e) {
+                System.err.printf("cannot close the outStream in start=%d, end = %d due to %s\n", start, end, e.toString());
+            }
         }
         return fileNum;
 

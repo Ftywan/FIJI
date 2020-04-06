@@ -225,7 +225,6 @@ public class SortOriginal extends Operator {
             // Extracts and writes out the root of the output heap (which is the smallest element among all input runs).
             TupleInRun outTuple = outHeap.poll();
             outStream.writeObject(outTuple.tuple);
-
             // Attempts to retrieve the next element from the same input buffer.
             int nextBatchID = outTuple.runID;
             int nextIndex = outTuple.tupleID + 1;
@@ -241,16 +240,11 @@ public class SortOriginal extends Operator {
                     }
                 }
                 inBatches[nextBatchID] = inBatch;
-
                 // Resets the index for that input buffer to be 0.
                 nextIndex = 0;
             }
-
             // Inserts the next element into the output heap if that input buffer is not empty.
             Batch inBatch = inBatches[nextBatchID];
-            // this is too handle the case where the last inStream is sometimes shorter
-            // then all the previous stream, Hence, when the last few data is load into buffer,
-            // they do not occupy the buffer fully. so size < index;
             if (inBatch == null || inBatch.size() <= nextIndex) {
                 inEos[nextBatchID] = true;
                 continue;

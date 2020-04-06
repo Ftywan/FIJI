@@ -74,9 +74,9 @@ public class SortMergeJoin extends Join {
 			rightIndices.add(right.getSchema().indexOf(rightattr));
 		}
 
-		sortedLeft = new SortOriginal(left, leftAttributes, numBuff);
+		sortedLeft = new Sort(left, leftAttributes, numBuff);
 		sortedLeft.open();
-		sortedRight = new SortOriginal(right, rightAttributes, numBuff);
+		sortedRight = new Sort(right, rightAttributes, numBuff);
 		sortedRight.open();
 
 		// Add condition to check whether both sortedLeft and sortedRight are open
