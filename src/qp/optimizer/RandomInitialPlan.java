@@ -19,12 +19,13 @@ public class RandomInitialPlan {
 
     ArrayList<Attribute> projectlist;
     ArrayList<String> fromlist;
-    ArrayList<Condition> selectionlist;   // List of select conditons
-    ArrayList<Condition> joinlist;        // List of join conditions
+    ArrayList<Condition> selectionlist;     // List of select conditons
+    ArrayList<Condition> joinlist;          // List of join conditions
     ArrayList<Attribute> groupbylist;
-    int numJoin;            // Number of joins in this query
+    ArrayList<Attribute> orderbylist;
+    int numJoin;                            // Number of joins in this query
     HashMap<String, Operator> tab_op_hash;  // Table name to the Operator
-    Operator root;          // Root of the query plan tree
+    Operator root;                          // Root of the query plan tree
 
     public RandomInitialPlan(SQLQuery sqlquery) {
         this.sqlquery = sqlquery;
@@ -33,6 +34,7 @@ public class RandomInitialPlan {
         selectionlist = sqlquery.getSelectionList();
         joinlist = sqlquery.getJoinList();
         groupbylist = sqlquery.getGroupByList();
+        orderbylist = sqlquery.getOrderByList();
         numJoin = joinlist.size();
     }
 
@@ -200,10 +202,11 @@ public class RandomInitialPlan {
 
     private void createOrderByOperator() {
         if (sqlquery.isOrderby()) {
-            OrderBy operator = new OrderBy(root, sqlquery.getProjectList());
+            OrderBy operator = new OrderBy(root, orderbylist);
             operator.setSchema(root.getSchema());
             root = operator;
         }
+        return;
     }
 
     private void modifyHashtable(Operator old, Operator newop) {
@@ -215,7 +218,8 @@ public class RandomInitialPlan {
     }
 
     /**
-     * Creates a distinct operator.
+     * Creates a distinct operator: 
+     * TODO: CHANGE THIS!!!! Should be correct, will come back
      */
     private void createDistinctOperator() {
         if (!sqlquery.getisDistinct()) {

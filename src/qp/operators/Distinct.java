@@ -2,20 +2,26 @@ package qp.operators;
 
 import java.util.ArrayList;
 
+import qp.optimizer.BufferManager;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
 import qp.utils.Tuple;
 
+
+// TODO: error when small number of buffers
+
 public class Distinct extends Operator {
-    private final ArrayList<Attribute> projected;
+    private final ArrayList<Attribute> projectedlist;
+    ArrayList<Integer> projectedIndices = new ArrayList<Integer>();
     private Operator base;
     private SortOriginal sortedFile;
     private int batchSize;;
     private int numOfBuffer;
     private boolean eos = false;
     private Batch in = null;
-    private int startIndex = 0;
+    private int batchIndex = 0;
+    private Tuple lastTuple = null; // To keep track of lastTuple
 
 
     /**
@@ -24,9 +30,8 @@ public class Distinct extends Operator {
     public Distinct(Operator base, ArrayList<Attribute> projected) {
         super(OpType.DISTINCT);
         this.base = base;
-        this.projected  = projected;
-
-
+        this.projectedlist  = projected;
+        numOfBuffer = BufferManager.getNumBuffer();
     }
 
     /**
@@ -36,7 +41,19 @@ public class Distinct extends Operator {
      */
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        sortedFile = new SortOriginal(base, projected, numOfBuffer);
+        //System.out.print("Distinct: ");
+        //System.out.println(projectedlist);
+        sortedFile = new Sort(base, projectedlist, numOfBuffer);
+
+        Schema baseSchema = base.getSchema();
+        for (int i = 0; i < projectedlist.size(); ++i) {
+            Attribute attr = projectedlist.get(i);
+
+            int index = baseSchema.indexOf(attr.getBaseAttribute());
+            projectedIndices.add(index);
+        }
+        //System.out.print("Distinct: What are projectedIndices");
+        //System.out.println(projectedIndices);
         return sortedFile.open(); // the file is now sorted and ready to use
     }
 
@@ -44,47 +61,48 @@ public class Distinct extends Operator {
         if (eos) {
             close();
             return null;
-        } else if(in == null) {
+        } else if(in == null) {//where there is not in batch
             in = sortedFile.next();
         }
-        //Debug.PPrint(in);
         // add in the first tuple into the out batch because it is used as
         // seed for duplication elimination.
         Batch out = new Batch(batchSize);
-        Tuple firstTuple = in.get(startIndex);
-        out.add(firstTuple);
-        startIndex++;
+        Tuple currentTuple = in.get(batchIndex);
+        //System.out.println("Distinct: adding to outBatch");
+        //Debug.PPrint(in);
+        out.add(currentTuple);
+        batchIndex++;
 
         while (!out.isFull()) {
-            if (startIndex >= in.size()) {
+            if (batchIndex >= in.size()) {//batchIndex exceeds inbatch size. we reach the end of the schema
                 eos = true;
                 break;
             }
 
-            Tuple tuple = in.get(startIndex);
-            boolean flag = true;
-            for (int i = 0; i < projected.size(); i++) {
-                // may need casting herr, check if there is error pop out.
-                int index = schema.indexOf(projected.get(i));
-                Tuple lastTuple = in.get(startIndex - 1);
-                if (Tuple.compareTuples(lastTuple, tuple, index) == 0) {
-                    flag = false;
+            lastTuple = currentTuple;
+            currentTuple = in.get(batchIndex);
+            int compareResult = Tuple.compareTuples(currentTuple, lastTuple, projectedIndices, projectedIndices);
+            if (compareResult != 0) {
+                // System.out.println("Distinct: adding to outBatch");
+                // Debug.PPrint(lastTuple);
+                // Debug.PPrint(currentTuple);
+                out.add(currentTuple);
+                // System.out.println("Distinct: current outbatch is");
+                // Debug.PPrint(out);
+                // System.out.println();
+            }
+            batchIndex++;
+
+            if (batchIndex == batchSize) {//when one batch is read completely
+                in = sortedFile.next();
+                //Debug.PPrint(in);
+                if (in == null) {
+                    eos = true;
                     break;
                 }
-            }
-            if (flag) {
-                out.add(tuple);
-            }
-            startIndex++;
-
-            if (startIndex == batchSize) {
-                in = sortedFile.next();
-                startIndex = 0;
+                batchIndex = 0;
             }
         }
-
-
-
         return out;
     }
 
@@ -106,8 +124,8 @@ public class Distinct extends Operator {
     public Object clone() {
         Operator newBase = (Operator) base.clone();
         ArrayList<Attribute> newProjectList = new ArrayList<>();
-        for (int i = 0; i < projected.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) projected.get(i)).clone();
+        for (int i = 0; i < projectedlist.size(); i++) {
+            Attribute attribute = (Attribute) ((Attribute) projectedlist.get(i)).clone();
             newProjectList.add(attribute);
         }
         Distinct newDistinct = new Distinct(newBase, newProjectList);

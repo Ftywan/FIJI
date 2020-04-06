@@ -2,10 +2,10 @@ package qp.operators;
 
 import java.util.ArrayList;
 
+import qp.optimizer.BufferManager;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Schema;
-import qp.utils.Tuple;
 
 /** TO DO:
  *  Update cost of OrderBy Operator!!!
@@ -17,12 +17,12 @@ import qp.utils.Tuple;
  *  In close(): close the sorted file
  */
 
- //TODO: Add in those exception catch!
+ //TODO: Add in those exception catch! 看起来好像没有什么error要catch????
 
 public class OrderBy extends Operator {
     
     Operator base;
-    ArrayList<Attribute> as; // Set of attributes that are to be ordered
+    ArrayList<Attribute> orderedlist; // Set of attributes that are to be ordered
 
     // Corresponding index of the attributes in above list
     // Use it to get the attributes from schema
@@ -39,20 +39,22 @@ public class OrderBy extends Operator {
     Batch inBatch = null;
     int inIndex = 0;
 
-    public OrderBy(Operator base, ArrayList<Attribute> as) {
+    public OrderBy(Operator base, ArrayList<Attribute> orderedlist) {
         super(OpType.ORDERBY);
         this.base = base;
-        this.as = as;
+        this.orderedlist = orderedlist;
+        numBuff = BufferManager.getNumBuffer();
     }
-    /*
+    
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
-        for (int i = 0; i < as.size(); i++) {
-            Attribute attribute = (Attribute) as.get(i);
+        for (int i = 0; i < orderedlist.size(); i++) {
+            Attribute attribute = (Attribute) orderedlist.get(i);
             asIndices.add(schema.indexOf(attribute));
         }
-        sortedFile = new Sort(base, as, numBuff);
-        return sortedFile.open();
+        sortedFile = new Sort(base, orderedlist, numBuff);
+        sortedFile.open();
+        return true;
     }
 
     public Batch next() {
@@ -63,10 +65,6 @@ public class OrderBy extends Operator {
             // Get a batch from sortedFile
             inBatch = sortedFile.next();
         }
-        // See if we are getting the correct tuples
-        //System.out.println("Getting inBatch from OrderBy");
-        //Debug.PPrint(inBatch);
-
 
         //Adding inBatch to outBatch until
 
@@ -86,46 +84,6 @@ public class OrderBy extends Operator {
             }
         }
         return outBatch;
-    }
-    */
-    //the code below is using the logic from Distinct, but no much difference.
-    public boolean open() {
-        batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        sortedFile = new SortOriginal(base, as, numBuff);
-        //Debug.PPrint(sortedFile);
-        return sortedFile.open(); // the file is now sorted and ready to use
-    }
-
-    public Batch next() {
-        if (eos) {
-            close();
-            return null;
-        } else if(inBatch == null) {
-            inBatch = sortedFile.next();
-        }
-        //Debug.PPrint(inBatch);
-        // add in the first tuple into the out batch because it is used as
-        // seed for duplication elimination.
-        Batch out = new Batch(batchSize);
-
-
-        while (!out.isFull()) {
-            if (inIndex >= inBatch.size()) {
-                eos = true;
-                break;
-            }
-
-            Tuple tuple = inBatch.get(inIndex);
-            out.add(tuple);
-            inIndex++;
-
-            if (inIndex == batchSize) {
-                inBatch = sortedFile.next();
-                inIndex = 0;
-            }
-        }
-
-        return out;
     }
 
     /**
@@ -150,13 +108,13 @@ public class OrderBy extends Operator {
 
     public Object clone() {
         Operator newBase = (Operator) base.clone();
-        ArrayList<Attribute> newProjectList = new ArrayList<>();
-        for (int i = 0; i < as.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) as.get(i)).clone();
-            newProjectList.add(attribute);
+        ArrayList<Attribute> newOrderByList = new ArrayList<>();
+        for (int i = 0; i < orderedlist.size(); i++) {
+            Attribute attribute = (Attribute) ((Attribute) orderedlist.get(i)).clone();
+            newOrderByList.add(attribute);
         }
 
-        OrderBy newOrderBy = new OrderBy(newBase, newProjectList);
+        OrderBy newOrderBy = new OrderBy(newBase, newOrderByList);
         Schema newSchema = newBase.getSchema();
         newOrderBy.setSchema(newSchema);
         return newOrderBy;

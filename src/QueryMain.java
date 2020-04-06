@@ -28,8 +28,6 @@ public class QueryMain {
         Batch.setPageSize(getPageSize(args, in));
 
         SQLQuery sqlquery = getSQLQuery(args[0]);
-        //System.out.print("How many join types ");
-        //System.out.println(in + "at QueryMian");
         configureBufferManager(sqlquery, args, in);
 
         Operator root = getQueryPlan(sqlquery);
@@ -116,7 +114,6 @@ public class QueryMain {
      **/
     public static Operator getQueryPlan(SQLQuery sqlquery) {
         Operator root = null;
-        System.out.println("getting query plan");
         RandomOptimizer optimizer = new RandomOptimizer(sqlquery);
         Operator planroot = optimizer.getOptimizedPlan();
 

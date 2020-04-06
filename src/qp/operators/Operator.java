@@ -39,7 +39,7 @@ public class Operator {
 
     public Batch next() {
         System.err.println("Abstract interface cannot be used.");
-        System.exit(1);
+        System.exit(1) ;
         return null;
     }
 

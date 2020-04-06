@@ -22,6 +22,13 @@ public class RandomOptimizer {
     public static final int ASSOCIATIVE = 2;   // Rearranging the operators by associative rule
 
     /**
+     * constants that needed for the SA algorithm
+     */
+    private static final double TEMPERATUREFACTOR = 0.1;
+    private static final double TEMPERATUREREDUCTIONFACTOR = 0.95;
+    private static final int EQUILIBRIUMFACTOR = 16;
+
+    /**
      * Number of altenative methods available for a node as specified above
      **/
     public static final int NUMCHOICES = 3;
@@ -32,7 +39,6 @@ public class RandomOptimizer {
     /**
      * constructor
      **/
-
     public RandomOptimizer(SQLQuery sqlquery) {
         this.sqlquery = sqlquery;
     }
@@ -43,14 +49,15 @@ public class RandomOptimizer {
      * * corresponding join operator implementation
      **/
     public static Operator makeExecPlan(Operator node) {
-        int numbuff = BufferManager.getBuffersPerJoin();
+        // for join operation
         if (node.getOpType() == OpType.JOIN) {
             Operator left = makeExecPlan(((Join) node).getLeft());
             Operator right = makeExecPlan(((Join) node).getRight());
             int joinType = ((Join) node).getJoinType();
-            //int numbuff = BufferManager.getBuffersPerJoin();
+            int numbuff = BufferManager.getBuffersPerJoin();
             switch (joinType) {
                 case JoinType.NESTEDJOIN:
+                    System.out.println("Page Nested Join");
                     NestedJoin nj = new NestedJoin((Join) node);
                     nj.setLeft(left);
                     nj.setRight(right);
@@ -58,7 +65,7 @@ public class RandomOptimizer {
                     return nj;
 
                 case JoinType.BLOCKNESTED:
-                    System.out.println("BlockNested Joining");
+                    System.out.println("Block Nested Join");
                     BlockNestedJoin bj = new BlockNestedJoin((Join) node);
                     bj.setLeft(left);
                     bj.setRight(right);
@@ -74,7 +81,7 @@ public class RandomOptimizer {
                     hj.setNumBuff(numbuff);
                     return hj;
                 case JoinType.SORTMERGE:
-                    System.out.println("SortMerge Joining");
+                    System.out.println("SortMerge Join");
                     SortMergeJoin sj = new SortMergeJoin((Join) node);
                     sj.setLeft(left);
                     sj.setRight(right);
@@ -93,17 +100,21 @@ public class RandomOptimizer {
             ((Project) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.DISTINCT) {
-            Distinct operator = (Distinct) node;
-            operator.setNumOfBuffer(numbuff);
-            Operator base = makeExecPlan(operator.getBase());
-            operator.setBase(base);
+            // TODO: verify the validity of this change
+//            Distinct operator = (Distinct) node;
+//            operator.setNumOfBuffer(numbuff); // configuring the buffer size has been moved to the constructor
+//            Operator base = makeExecPlan(operator.getBase());
+//            operator.setBase(base);
+            Operator base = makeExecPlan(((Distinct) node).getBase());
+            ((Distinct) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.ORDERBY) {
-            OrderBy operator = (OrderBy) node;
-            System.out.println("Using Order By");
-            operator.setNumOfBuffer(numbuff);
-            Operator base = makeExecPlan(operator.getBase());
-            operator.setBase(base);
+//            OrderBy operator = (OrderBy) node;
+//            operator.setNumOfBuffer(numbuff);
+//            Operator base = makeExecPlan(operator.getBase());
+//            operator.setBase(base);
+            Operator base = makeExecPlan(((OrderBy) node).getBase());
+            ((OrderBy) node).setBase(base);
             return node;
         } else {
             return node;
@@ -134,9 +145,19 @@ public class RandomOptimizer {
     }
 
     /**
+     * Implementation of the 2 Phase Optimization with Iterative Improvement and the Simulated Annealing Algorithm
+     */
+    public Operator getOptimizedPlan() {
+        Operator phaseOne = runIIOptimization();
+        Operator phaseTwo = runSAOptimization(phaseOne);
+
+        return phaseTwo;
+    }
+
+    /**
      * Implementation of Iterative Improvement Algorithm for Randomized optimization of Query Plan
      **/
-    public Operator getOptimizedPlan() {
+    public Operator runIIOptimization() {
         /** get an initial plan for the given sql query **/
         RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
         numJoin = rip.getNumJoins();
@@ -167,12 +188,15 @@ public class RandomOptimizer {
             boolean flag = true;
             long minNeighborCost = initCost;   //just initialization purpose;
             Operator minNeighbor = initPlan;  //just initialization purpose;
+
+            // looking for the local minimum
             if (numJoin != 0) {
                 while (flag) {  // flag = false when local minimum is reached
                     System.out.println("---------------while--------");
                     Operator initPlanCopy = (Operator) initPlan.clone();
                     minNeighbor = getNeighbor(initPlanCopy);
 
+                    // initialize a neighbor cost with a random neighbor
                     System.out.println("--------------------------neighbor---------------");
                     Debug.PPrint(minNeighbor);
                     pc = new PlanCost();
@@ -229,11 +253,50 @@ public class RandomOptimizer {
     }
 
     /**
-     * Selects a random method choice for join wiht number joinNum
+     * Implementation of Simulated Annealing Algorithm for Randomized optimization of Query Plan
+     **/
+    public Operator runSAOptimization(Operator initialPlan) {
+        Operator currentPlan = initialPlan;
+        Operator minCostPlan = currentPlan;
+        PlanCost initialCost = new PlanCost();
+        long minCost = initialCost.getCost(currentPlan);
+        double temperature = TEMPERATUREFACTOR * minCost;
+        int stableTime = 0;
+        int equilibrium = EQUILIBRIUMFACTOR * numJoin;
+
+        while (temperature >= 1 && stableTime <= 4) {
+            for (int i = 0; i < equilibrium; i ++) {
+                Operator neighborPlan = getNeighbor((Operator) currentPlan.clone());
+                System.out.println("---------------SA Neighbor---------------");
+                Debug.PPrint(neighborPlan);
+                PlanCost neighborCost = new PlanCost();
+                PlanCost currentCost = new PlanCost();
+                long deltaCost = neighborCost.getCost(neighborPlan) - currentCost.getCost(currentPlan);
+
+                if (deltaCost <= 0) {
+                    currentPlan = neighborPlan;
+                }
+                if (deltaCost > 0) {
+                    double probability = Math.exp(-(deltaCost / temperature));
+                    if (Math.random() < probability) {
+                        currentPlan = neighborPlan;
+                    }
+                }
+                currentCost = new PlanCost();
+                if (currentCost.getCost(currentPlan) < minCost) {
+                    minCostPlan = neighborPlan;
+                }
+            }
+            temperature *= TEMPERATUREREDUCTIONFACTOR;
+        }
+        return minCostPlan;
+    }
+
+    /**
+     * Selects a random method choice for join with number joinNum
      * *  e.g., Nested loop join, Sort-Merge Join, Hash Join etc..,
      * * returns the modified plan
      **/
-
     protected Operator neighborMeth(Operator root, int joinNum) {
         System.out.println("------------------neighbor by method change----------------");
         int numJMeth = JoinType.numJoinTypes();
@@ -407,7 +470,7 @@ public class RandomOptimizer {
     }
 
     /**
-     * Modifies the schema of operators which are modified due to selecing an alternative neighbor plan
+     * Modifies the schema of operators which are modified due to selecting an alternative neighbor plan
      **/
     private void modifySchema(Operator node) {
         if (node.getOpType() == OpType.JOIN) {
