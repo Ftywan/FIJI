@@ -21,8 +21,8 @@ public class SortMergeJoin extends Join {
 	ArrayList<Attribute> rightAttributes;
 	// Type of the join attribute.
 	private int attrType;
-	Sort sortedLeft;
-	Sort sortedRight;
+	SortOriginal sortedLeft;
+	SortOriginal sortedRight;
 
 	// The buffer for the left input stream.
 	private Batch leftBatch;
@@ -92,9 +92,9 @@ public class SortMergeJoin extends Join {
 			rightIndices.add(right.getSchema().indexOf(rightattr));
 		}
 
-		sortedLeft = new Sort(left, leftAttributes, numBuff);
+		sortedLeft = new SortOriginal(left, leftAttributes, numBuff);
 		sortedLeft.open();
-		sortedRight = new Sort(right, rightAttributes, numBuff);
+		sortedRight = new SortOriginal(right, rightAttributes, numBuff);
 		sortedRight.open();
 
 		// Add condition to check whether both sortedLeft and sortedRight are open

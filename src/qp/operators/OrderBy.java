@@ -34,7 +34,7 @@ public class OrderBy extends Operator {
     // How many buffers are available for performing this operation
     // Get the numBuff for External Sort
     int numBuff;
-    Sort sortedFile;
+    SortOriginal sortedFile;
     boolean eos = false;
     Batch inBatch = null;
     int inIndex = 0;
@@ -91,7 +91,7 @@ public class OrderBy extends Operator {
     //the code below is using the logic from Distinct, but no much difference.
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        sortedFile = new Sort(base, as, numBuff);
+        sortedFile = new SortOriginal(base, as, numBuff);
         //Debug.PPrint(sortedFile);
         return sortedFile.open(); // the file is now sorted and ready to use
     }

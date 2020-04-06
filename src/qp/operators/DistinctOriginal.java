@@ -19,7 +19,7 @@ public class DistinctOriginal extends Operator {
     // The base operator.
     private Operator base;
     // The sort operator applied on the base operator.
-    private Sort sortedBase;
+    private SortOriginal sortedBase;
     // The number of tuples per batch.
     private int batchSize;
     // The number of buffers available
@@ -52,7 +52,7 @@ public class DistinctOriginal extends Operator {
             projectIndices.add(schema.indexOf(attribute));
         }
 
-        sortedBase = new Sort(base, projectList, numOfBuffer);
+        sortedBase = new SortOriginal(base, projectList, numOfBuffer);
         return sortedBase.open();
     }
 

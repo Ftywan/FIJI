@@ -1,6 +1,5 @@
 package qp.operators;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import qp.utils.Attribute;
@@ -11,7 +10,7 @@ import qp.utils.Tuple;
 public class Distinct extends Operator {
     private final ArrayList<Attribute> projected;
     private Operator base;
-    private Sort sortedFile;
+    private SortOriginal sortedFile;
     private int batchSize;;
     private int numOfBuffer;
     private boolean eos = false;
@@ -37,7 +36,7 @@ public class Distinct extends Operator {
      */
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        sortedFile = new Sort(base, projected, numOfBuffer);
+        sortedFile = new SortOriginal(base, projected, numOfBuffer);
         return sortedFile.open(); // the file is now sorted and ready to use
     }
 

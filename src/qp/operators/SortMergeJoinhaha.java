@@ -25,8 +25,8 @@ public class SortMergeJoinhaha extends Join {
 	ArrayList<Integer> rightIndices;
 	ArrayList<Attribute> leftAttributes;
 	ArrayList<Attribute> rightAttributes;
-	Sort sortedLeft;
-	Sort sortedRight;
+	SortOriginal sortedLeft;
+	SortOriginal sortedRight;
 	Batch leftBatch;
 	ArrayList<Tuple> leftBlock;
 	Batch rightBatch;
@@ -70,9 +70,9 @@ public class SortMergeJoinhaha extends Join {
 			rightIndices.add(right.getSchema().indexOf(rightattr));
 		}
 
-		sortedLeft = new Sort(left, leftAttributes, numBuff);
+		sortedLeft = new SortOriginal(left, leftAttributes, numBuff);
 		sortedLeft.open();
-		sortedRight = new Sort(right, rightAttributes, numBuff);
+		sortedRight = new SortOriginal(right, rightAttributes, numBuff);
 		sortedRight.open();
 
 		// Add condition to check whether both sortedLeft and sortedRight are open
