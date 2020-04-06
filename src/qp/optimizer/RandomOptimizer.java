@@ -158,6 +158,7 @@ public class RandomOptimizer {
      * Implementation of Iterative Improvement Algorithm for Randomized optimization of Query Plan
      **/
     public Operator runIIOptimization() {
+        System.out.println("Starting Iterative Improvement Phase");
         /** get an initial plan for the given sql query **/
         RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
         numJoin = rip.getNumJoins();
@@ -165,12 +166,14 @@ public class RandomOptimizer {
         Operator finalPlan = null;
 
         /** NUMITER is number of times random restart **/
-        int NUMITER;
-        if (numJoin != 0) {
-            NUMITER = 2 * numJoin;
-        } else {
-            NUMITER = 1;
-        }
+        int NUMITER = 10;
+
+        /** as we are using 2PO, we will iterate 10 times in this phase**/
+//        if (numJoin != 0) {
+//            NUMITER = 2 * numJoin;
+//        } else {
+//            NUMITER = 1;
+//        }
 
         /** Randomly restart the gradient descent until
          *  the maximum specified number of random restarts (NUMITER)
@@ -245,10 +248,11 @@ public class RandomOptimizer {
                 finalPlan = minNeighbor;
             }
         }
-        System.out.println("\n\n\n");
-        System.out.println("---------------------------Final Plan----------------");
+        System.out.println("\n\n");
+        System.out.println("----------------Iterative Improvement Final Plan----------------");
         Debug.PPrint(finalPlan);
         System.out.println("  " + MINCOST);
+        System.out.println("\n");
         return finalPlan;
     }
 
@@ -256,19 +260,22 @@ public class RandomOptimizer {
      * Implementation of Simulated Annealing Algorithm for Randomized optimization of Query Plan
      **/
     public Operator runSAOptimization(Operator initialPlan) {
+        System.out.println("Starting Simulated Annealing Phase");
         Operator currentPlan = initialPlan;
         Operator minCostPlan = currentPlan;
         PlanCost initialCost = new PlanCost();
-        long minCost = initialCost.getCost(currentPlan);
-        double temperature = TEMPERATUREFACTOR * minCost;
+        long minCostValue = initialCost.getCost(currentPlan);
+        double temperature = TEMPERATUREFACTOR * minCostValue;
         int stableTime = 0;
         int equilibrium = EQUILIBRIUMFACTOR * numJoin;
 
         while (temperature >= 1 && stableTime <= 4) {
+            Operator startPlan = minCostPlan;
             for (int i = 0; i < equilibrium; i ++) {
                 Operator neighborPlan = getNeighbor((Operator) currentPlan.clone());
-                System.out.println("---------------SA Neighbor---------------");
+                System.out.println("\n---------------SA Neighbor---------------");
                 Debug.PPrint(neighborPlan);
+                System.out.print("\n");
                 PlanCost neighborCost = new PlanCost();
                 PlanCost currentCost = new PlanCost();
                 long deltaCost = neighborCost.getCost(neighborPlan) - currentCost.getCost(currentPlan);
@@ -283,12 +290,23 @@ public class RandomOptimizer {
                     }
                 }
                 currentCost = new PlanCost();
-                if (currentCost.getCost(currentPlan) < minCost) {
+                long currentCostValue = currentCost.getCost(currentPlan);
+                if (currentCostValue < minCostValue) {
                     minCostPlan = neighborPlan;
+                    minCostValue = currentCostValue;
                 }
             }
+            Operator endPlan = minCostPlan;
             temperature *= TEMPERATUREREDUCTIONFACTOR;
+            if (startPlan.hashCode() == endPlan.hashCode()) {
+                stableTime ++;
+            } else {
+                stableTime = 0;
+            }
         }
+        System.out.println("----------------Iterative Improvement Final Plan----------------\n");
+        Debug.PPrint(minCostPlan);
+        System.out.println("\n");
         return minCostPlan;
     }
 
