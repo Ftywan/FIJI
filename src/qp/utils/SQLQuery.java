@@ -22,6 +22,7 @@ public class SQLQuery {
     ArrayList<Attribute> orderbyList;    // List of attibutes in orderby clause
 
     boolean isDistinct = false;          // Whether distinct key word appeared in select clause
+    boolean isDesc = false;              // Whether desc key word appeared in the orderby clause
 
     public SQLQuery(ArrayList<Attribute> list1, ArrayList<String> list2, ArrayList<Condition> list3) {
         projectList = list1;
@@ -124,4 +125,12 @@ public class SQLQuery {
         return orderbyList != null && !orderbyList.isEmpty();
     }
 
+    public void setIsDesc(boolean b) {
+        isDesc = b;
+        System.out.println(isDesc);
+    }
+
+    public boolean getIsDesc() {
+        return isDesc;
+    }
 }
