@@ -15,7 +15,7 @@ public class Distinct extends Operator {
     private final ArrayList<Attribute> projectedlist;
     ArrayList<Integer> projectedIndices = new ArrayList<Integer>();
     private Operator base;
-    private SortOriginal sortedFile;
+    private Sort sortedFile;
     private int batchSize;;
     private int numOfBuffer;
     private boolean eos = false;
@@ -43,7 +43,7 @@ public class Distinct extends Operator {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
         //System.out.print("Distinct: ");
         //System.out.println(projectedlist);
-        sortedFile = new SortOriginal(base, projectedlist, numOfBuffer);
+        sortedFile = new Sort(base, projectedlist, numOfBuffer);
 
         Schema baseSchema = base.getSchema();
         for (int i = 0; i < projectedlist.size(); ++i) {

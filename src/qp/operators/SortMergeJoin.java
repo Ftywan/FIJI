@@ -5,6 +5,7 @@ import qp.utils.Batch;
 import qp.utils.Condition;
 import qp.utils.Tuple;
 
+import java.io.*;
 import java.util.ArrayList;
 
 /** Creating a Join:
@@ -46,6 +47,10 @@ public class SortMergeJoin extends Join {
 	int partitionEosr;
 	Tuple leftTuple;
 	Tuple rightTuple;
+	Tuple lastLeftTuple;
+	static int fileNumber = 0; 
+	String rightFileName; 
+
 
 
 	public SortMergeJoin(Join jn) {
@@ -56,6 +61,11 @@ public class SortMergeJoin extends Join {
 	}
 
 	public boolean open() {
+		System.out.println("SortMerge: Opening SortMerge");
+		System.out.print("SortMerge: Left schema is: ");
+		Debug.PPrint(left.getSchema());
+		System.out.print("SortMerge: Right schema is: ");
+		Debug.PPrint(right.getSchema());
 		/** select number of tuples per batch **/
 		int tuplesize = schema.getTupleSize();
 		batchSize = Batch.getPageSize() / tuplesize;
@@ -84,7 +94,7 @@ public class SortMergeJoin extends Join {
 	}
 
 	public Batch next() {
-		// System.out.println("SMJ: Entering next()");
+		System.out.println("SMJ: Entering next()");
 		// Read one left page and always read in partition into the memory
 		if (eosl || eosr) {
 			// System.out.println("SMJ: Closing next()");
@@ -93,9 +103,9 @@ public class SortMergeJoin extends Join {
 		}
 		if (leftBatch == null) {
 			leftBatch = sortedLeft.next();
-			//System.out.print("SMJ: left batch is: ");
-			//Debug.PPrint(leftBatch);
-			if (leftBatch == null) {
+			System.out.print("SMJ: left batch is: ");
+			Debug.PPrint(leftBatch);
+			if (leftBatch == null || leftBatch.isEmpty()) {
 				eosl = true;
 				return null;
 			}
@@ -106,12 +116,12 @@ public class SortMergeJoin extends Join {
 		}
 		if (rightBatch == null) {
 			rightBatch = sortedRight.next();
-			if (rightBatch == null) {
+			if (rightBatch == null || rightBatch.isEmpty()) {
 				eosr = true;
 				return null;
 			}
-			//System.out.println("SMJ: first rightBatch is ");
-			//Debug.PPrint(rightBatch);
+			System.out.println("SMJ: first rightBatch is ");
+			Debug.PPrint(rightBatch);
 			rightPartition = getNextPartition();
 			//TODO: try & catch: Print error when next partition exceeds buffer number
 			partitionEosr = 0;
@@ -122,18 +132,22 @@ public class SortMergeJoin extends Join {
 		while (!outBatch.isFull()) {
 			int compareResult = Tuple.compareTuples(leftTuple, rightTuple, leftIndices, rightIndices);
 			if (compareResult == 0) { // left and right tuples are equal
-				//System.out.println("SMJ: Equal found");
+				System.out.println("SMJ: Equal found, they are:============");
+				Debug.PPrint(leftTuple);
+				Debug.PPrint(rightTuple);
 				outBatch.add(leftTuple.joinWith(rightTuple)); // add join result into outBatch, continues to next comparison
 				if (partitionEosr == rightPartition.size()-1) {//finish reading right partition
 					// if next left tuple has the same key value as current left tuple, we don't advance right partition first
-					Tuple lastLeftTuple = leftTuple;
+					lastLeftTuple = leftTuple;
 					lcurs++;
 					if (lcurs == leftBatch.size()) {//left cursor reached the size of leftBatch
+						System.out.println("SM: Next left batch is:");
 						leftBatch = sortedLeft.next();
 						if (leftBatch == null || leftBatch.isEmpty()) {
 							eosl = true;
 							break;
 						}
+						Debug.PPrint(leftBatch);
 						lcurs = 0;
 					}
 					/*
@@ -148,9 +162,9 @@ public class SortMergeJoin extends Join {
 						eosl = true;
 						break;
 					}
-					// System.out.println("SMJ: Checking two consecutive left tuples");
-					// Debug.PPrint(lastLeftTuple);
-					// Debug.PPrint(leftTuple);
+					System.out.println("SMJ: Checking two consecutive left tuples");
+					Debug.PPrint(lastLeftTuple);
+					Debug.PPrint(leftTuple);
 					compareResult = Tuple.compareTuples(lastLeftTuple, leftTuple, leftIndices, leftIndices);
 					if (compareResult == 0) {// two consecutive tuples has equal values
 						partitionEosr = 0;
@@ -172,7 +186,7 @@ public class SortMergeJoin extends Join {
 				}
 			}
 			else if (compareResult > 0) { // left tuple is larger, advance right, remember for right we always advance by partition
-				//System.out.println("SMJ: Advance right");
+				System.out.println("SMJ: Advance right");
 				rightPartition = getNextPartition(); // get next right partition
 				if (rightPartition.size() == 0) {
 					eosr = true;
@@ -182,25 +196,29 @@ public class SortMergeJoin extends Join {
 				rightTuple = rightPartition.get(partitionEosr);
 			}
 			else if (compareResult < 0) { // right tuple is larger, advance left
-				//System.out.println("SMJ: Advance left ");
+				System.out.println("SMJ: Advance left ");
 				lcurs++;
 				if (lcurs == leftBatch.size()) { // no more tuples to read in leftBatch
+					System.out.println("SM: Next left batch is:");
 					leftBatch = sortedLeft.next(); //read in new Batch
 					if (leftBatch == null || leftBatch.isEmpty()) {
 						eosl = true;
 						break;
 					}
+					Debug.PPrint(leftBatch);
 					lcurs = 0; // set cursor back to 0
 				}
 				leftTuple = leftBatch.get(lcurs);
-				//Debug.PPrint(leftTuple);
+				Debug.PPrint(leftTuple);
 			}
 		}
+		System.out.println("SMJ: an outbatch is: ===========================================================");
+		Debug.PPrint(outBatch);
 		return outBatch;
 	}
 
 	private ArrayList<Tuple> getNextPartition() {
-		//System.out.println("SMJ: Generatin next partition");
+		System.out.println("SMJ: Generatin next partition");
 		/** 
 			we keep reading in right tuples until there is a value change
 			Remember we always get right by partition
@@ -230,7 +248,7 @@ public class SortMergeJoin extends Join {
 			//System.out.println("SMJ: adding this tuple into partition");
 			//Debug.PPrint(next);
 			partition.add(next);
-			//Debug.PPrint(next);
+			Debug.PPrint(next);
 			// get next right tuple
 			//if (next == null) {//get next right tuple
 			//System.out.print("SMJ: rcurs is: ");
