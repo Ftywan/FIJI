@@ -72,14 +72,14 @@ public class RandomOptimizer {
                     bj.setNumBuff(numbuff);
                     return bj;
                 
-                case JoinType.HASHJOIN:
-                    System.out.println("Hash Join");
-                    HashJoin hj = new HashJoin((Join) node);
-                    
-                    hj.setLeft(left);
-                    hj.setRight(right);
-                    hj.setNumBuff(numbuff);
-                    return hj;
+//                case JoinType.HASHJOIN:
+//                    System.out.println("Hash Join");
+//                    HashJoin hj = new HashJoin((Join) node);
+//
+//                    hj.setLeft(left);
+//                    hj.setRight(right);
+//                    hj.setNumBuff(numbuff);
+//                    return hj;
                 case JoinType.SORTMERGE:
                     System.out.println("SortMerge Join");
                     SortMergeJoin sj = new SortMergeJoin((Join) node);
