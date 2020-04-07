@@ -162,7 +162,6 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                System.out.println("BlockNested Joiningggg");
                 joincost = (int) (leftpages + Math.ceil(leftpages/(numbuff - 2)) * rightpages);
                 break;
             case JoinType.HASHJOIN:
@@ -170,8 +169,8 @@ public class PlanCost {
                 break;
             case JoinType.SORTMERGE:
                 // components of cost = leftcost + rightcost + mergingcost
-                long leftCost = getExternalSortCost(leftpages, numbuff);
-                long rightCost = getExternalSortCost(rightpages, numbuff);
+                long leftCost = getExternalSortCost(leftpages, BufferManager.getNumBuffer());
+                long rightCost = getExternalSortCost(rightpages, BufferManager.getNumBuffer());
 
                 long mergingCost = (leftpages + rightpages);
                 joincost = leftCost + rightCost + mergingCost;
