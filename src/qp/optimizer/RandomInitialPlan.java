@@ -49,23 +49,11 @@ public class RandomInitialPlan {
      * prepare initial plan for the query
      **/
     public Operator prepareInitialPlan() {
-        /*
-        if (sqlquery.isDistinct()) {
-            System.err.println("Distinct is not implemented.");
-            System.exit(1);
-        }
-
-         */
 
         if (sqlquery.getGroupByList().size() > 0) {
             System.err.println("GroupBy is not implemented.");
             System.exit(1);
         }
-
-//        if (sqlquery.getOrderByList().size() > 0) {
-//            System.err.println("Orderby is not implemented.");
-//            System.exit(1);
-//        }
 
         tab_op_hash = new HashMap<>();
         createScanOp();
@@ -132,7 +120,7 @@ public class RandomInitialPlan {
             Condition cn = selectionlist.get(j);
             if (cn.getOpType() == Condition.SELECT) {
                 String tabname = cn.getLhs().getTabName();
-                Operator tempop = (Operator) tab_op_hash.get(tabname);
+                Operator tempop = tab_op_hash.get(tabname);
                 op1 = new Select(tempop, cn, OpType.SELECT);
                 /** set the schema same as base relation **/
                 op1.setSchema(tempop.getSchema());
@@ -163,11 +151,11 @@ public class RandomInitialPlan {
             while (bitCList.get(jnnum)) {
                 jnnum = RandNumb.randInt(0, numJoin - 1);
             }
-            Condition cn = (Condition) joinlist.get(jnnum);
+            Condition cn = joinlist.get(jnnum);
             String lefttab = cn.getLhs().getTabName();
             String righttab = ((Attribute) cn.getRhs()).getTabName();
-            Operator left = (Operator) tab_op_hash.get(lefttab);
-            Operator right = (Operator) tab_op_hash.get(righttab);
+            Operator left = tab_op_hash.get(lefttab);
+            Operator right = tab_op_hash.get(righttab);
             jn = new Join(left, right, cn, OpType.JOIN);
             jn.setNodeIndex(jnnum);
             Schema newsche = left.getSchema().joinWith(right.getSchema());

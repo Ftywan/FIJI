@@ -69,7 +69,7 @@ public class BlockNestedJoin extends Join{
 			return false;
 		} else {
 			fileNumber ++;
-			rightFileName = "BNJtemp-" + String.valueOf(fileNumber);
+			rightFileName = "BNJtemp-" + fileNumber;
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rightFileName));
 				while ((materializePage = right.next()) != null) {
@@ -105,7 +105,7 @@ public class BlockNestedJoin extends Join{
 				/** NumBuffer - 2 pages in the buffer is available for caching the left table **/
 				for (int a = 0; a < numBuff - 2; a++) {
 					/** load each page into the buffer **/
-					leftInputPage = (Batch) left.next();
+					leftInputPage = left.next();
 					/** there is no data in the left table **/
 					if (leftInputPage != null) {
 						block.addAll(leftInputPage.getTuples());
@@ -136,9 +136,6 @@ public class BlockNestedJoin extends Join{
 
 			// still under the progress of comparing the current left with the whole right table
 			while (endOfRightStream == false) {
-				System.out.println("endOdRightStream set to false");
-				System.out.print("rightCursor is: ");
-				System.out.println(rightCursor);
 				try {
 					if (rightCursor == 0 && leftCursor == 0) {
 						rightInputPage = (Batch) in.readObject();
@@ -156,16 +153,16 @@ public class BlockNestedJoin extends Join{
 								outputPage.add(outTuple);
 								/** conditions of left and right cursors when the output buffer page is full **/
 								if (outputPage.isFull()) {
-									if (i == block.size() - 1 && j == rightInputPage.size() - 1) {
+									if (i == block.size() - 1 && j == rightInputPage.size() - 1) { // both have finished
 										leftCursor = 0;
 										rightCursor = 0;
-									} else if (i != block.size() - 1 && j == rightInputPage.size() - 1) {
+									} else if (i != block.size() - 1 && j == rightInputPage.size() - 1) { // right has finished, left has not
 										leftCursor = i + 1;
 										rightCursor = 0;
-									} else if (i == block.size() - 1 && j != rightInputPage.size() - 1) {
+									} else if (i == block.size() - 1 && j != rightInputPage.size() - 1) { // the last of left has not finished
 										leftCursor = i;
 										rightCursor = j + 1;
-									} else {
+									} else { // both have not finished
 										leftCursor = i;
 										rightCursor = j + 1;
 									}

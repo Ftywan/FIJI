@@ -100,19 +100,10 @@ public class RandomOptimizer {
             ((Project) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.DISTINCT) {
-            // TODO: verify the validity of this change
-//            Distinct operator = (Distinct) node;
-//            operator.setNumOfBuffer(numbuff); // configuring the buffer size has been moved to the constructor
-//            Operator base = makeExecPlan(operator.getBase());
-//            operator.setBase(base);
             Operator base = makeExecPlan(((Distinct) node).getBase());
             ((Distinct) node).setBase(base);
             return node;
         } else if (node.getOpType() == OpType.ORDERBY) {
-//            OrderBy operator = (OrderBy) node;
-//            operator.setNumOfBuffer(numbuff);
-//            Operator base = makeExecPlan(operator.getBase());
-//            operator.setBase(base);
             Operator base = makeExecPlan(((OrderBy) node).getBase());
             ((OrderBy) node).setBase(base);
             return node;
@@ -165,15 +156,10 @@ public class RandomOptimizer {
         long MINCOST = Long.MAX_VALUE;
         Operator finalPlan = null;
 
-        /** NUMITER is number of times random restart **/
+        /** NUMITER is number of times random restart
+         * as we are using 2PO, we will iterate 10 times in this phase
+         **/
         int NUMITER = 10;
-
-        /** as we are using 2PO, we will iterate 10 times in this phase**/
-//        if (numJoin != 0) {
-//            NUMITER = 2 * numJoin;
-//        } else {
-//            NUMITER = 1;
-//        }
 
         /** Randomly restart the gradient descent until
          *  the maximum specified number of random restarts (NUMITER)
