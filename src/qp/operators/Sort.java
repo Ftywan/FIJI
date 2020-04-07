@@ -40,13 +40,7 @@ public class Sort extends Operator {
         if (!base.open()) {
             return false;
         }
-        /*
-        int numOfRuns = sortedRuns();
-        if (mergeRuns(numOfRuns, 1) ==1) {
-            return true;
-        } else {
-            return false;
-        }*/
+
         int i = sortedRuns(); //generate sorted runs
         System.out.println("in sort open(), the number of sorted file is " + i);; //merge sorted runs
         return merge(i, 1) == 1;
@@ -100,7 +94,6 @@ public class Sort extends Operator {
         // after one pass, the merged files will be stored and fileNum will reduced
 
         int fileNumNow = fileNum;
-
         if (fileNumNow <= 1) {
             //System.out.println("Hiiiiiiiiii, is the fileNumNow is 1?" + fileNumNow);
             String fileName = outFileName(pass - 1, 0);
@@ -113,15 +106,6 @@ public class Sort extends Operator {
         }
         fileNumNow = mergeIntermediate(fileNumNow, pass + 1);
         pass++;
-//        while (fileNumNow > 1) {
-//            try {
-//                fileNumNow = mergeIntermediate(fileNumNow, pass + 1);
-//            } catch (Exception e) {
-//                System.err.printf("mergeIntermediate function does not work for pass = %d and filenum = %d\n ", pass, fileNumNow, e.toString());
-//            }
-//            pass++;
-//            System.out.println(pass + " merge finished and output file number is " + fileNumNow);
-//        }
         return merge(fileNumNow, pass);
 
         //catch some errors????
@@ -287,7 +271,7 @@ public class Sort extends Operator {
 
 
     private String outFileName(int passID, int runID) {
-        return "Sort-run-" + uuid + "-" + passID + "-" + runID;
+        return "Sorted" + uuid + "_" + passID + "_" + runID;
     }
 
     public Batch next() {
@@ -328,6 +312,7 @@ public class Sort extends Operator {
             System.err.println("Cannot close sortedStream " + e.toString());
             return false;
         }
+
         return true;
     }
 
