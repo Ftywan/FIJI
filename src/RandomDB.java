@@ -3,13 +3,14 @@ import qp.utils.Schema;
 
 import java.io.*;
 import java.util.*;
+import java.sql.Time;
 
 public class RandomDB {
 
     static boolean[] pk;
     static HashMap<Integer, HashSet<Integer>> fk = new HashMap<>();
     private static Random random;
-
+    private static final int TIME_IN_DAY = 24 * 60 * 60 * 1000;
     public RandomDB() {
         random = new Random(System.currentTimeMillis());
     }
@@ -77,6 +78,8 @@ public class RandomDB {
                     // System.out.println("String");
                 } else if (datatype[i].equals("REAL")) {
                     type = Attribute.REAL;
+                } else if (datatype[i].equals("TIME")) {
+                    type = Attribute.TIME;
                 } else {
                     type = -1;
                     System.err.println("invalid data type");
@@ -137,6 +140,8 @@ public class RandomDB {
                                 fk.get(j).add(value);
                             }
                         }
+                    } else if (datatype[j].equals("TIME")){
+                        outtbl.print(random.nextInt(TIME_IN_DAY) + "\t");
                     }
                 }
                 if (i != numtuple - 1)
