@@ -88,9 +88,15 @@ public class SortMergeJoin extends Join {
 		}
 
 		sortedLeft = new Sort(left, leftAttributes, numBuff);
+		System.out.println("i am going to open left");
 		sortedLeft.open();
+		System.out.println("left is done");
 		sortedRight = new Sort(right, rightAttributes, numBuff);
+		System.out.println("i am going to open right");
 		sortedRight.open();
+		System.out.println("right is done");
+		//Debug.PPrint(sortedRight.next());
+
 
 		// Add condition to check whether both sortedLeft and sortedRight are open
 		return true;
@@ -117,7 +123,9 @@ public class SortMergeJoin extends Join {
 			// read in next left tuple
 			//System.out.println("first left Batch is");
 			//Debug.PPrint(leftBatch);
+			System.out.println("in sortmerge join, lcurs is " + lcurs);
 			leftTuple = leftBatch.get(lcurs);
+			Debug.PPrint(leftTuple);
 		}
 		if (rightBatch == null) {
 			System.out.println("continue here2?");
@@ -139,6 +147,8 @@ public class SortMergeJoin extends Join {
 		}
 		Batch outBatch = new Batch(batchSize);
 		while (!outBatch.isFull()) {
+			//System.out.println("left index " + leftIndices.toArray());
+			//System.out.println("right index " + rightIndices.toArray());
 			int compareResult = Tuple.compareTuples(leftTuple, rightTuple, leftIndices, rightIndices);
 			if (compareResult == 0) { // left and right tuples are equal
 				System.out.println("SMJ: Equal found, they are:============");

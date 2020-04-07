@@ -3,7 +3,7 @@ package qp.operators;
 
 import java.util.Vector;
 
-import jdk.internal.dynalink.linker.ConversionComparator.Comparison;
+//import jdk.internal.dynalink.linker.ConversionComparator.Comparison;
 import qp.utils.Attribute;
 import qp.utils.Batch;
 import qp.utils.Tuple;
