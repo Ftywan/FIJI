@@ -149,10 +149,9 @@ public class RandomOptimizer {
      */
     public Operator getOptimizedPlan() {
         Operator phaseOne = runIIOptimization();
-        //Operator phaseTwo = runSAOptimization(phaseOne);
+        Operator phaseTwo = runSAOptimization(phaseOne);
 
-        //return phaseTwo;
-        return phaseOne;
+        return phaseTwo;
     }
 
     /**

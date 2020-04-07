@@ -161,11 +161,9 @@ public class BlockNestedJoin extends Join{
 										rightCursor = 0;
 									} else if (i != block.size() - 1 && j == rightInputPage.size() - 1) {
 										leftCursor = i + 1;
-										//rightCursor = 0;
-										rightCursor = j;
+										rightCursor = 0;
 									} else if (i == block.size() - 1 && j != rightInputPage.size() - 1) {
-										//leftCursor = i;
-										leftCursor = 0;
+										leftCursor = i;
 										rightCursor = j + 1;
 									} else {
 										leftCursor = i;
