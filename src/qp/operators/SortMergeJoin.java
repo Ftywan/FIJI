@@ -211,7 +211,7 @@ public class SortMergeJoin extends Join {
 			else if (compareResult > 0) { // left tuple is larger, advance right, remember for right we always advance by partition
 				System.out.println("SMJ: Advance right");
 				rightPartition = getNextPartition(); // get next right partition
-				if (rightPartition == null || rightPartition.isEmpty()) {
+				if (rightPartition == null || rightPartition.isEmpty() || rightPartition.size() == 0) {
 					// System.out.println("SMJ: When do you set as true2???");
 					eosr = true;
 					break;
@@ -241,71 +241,71 @@ public class SortMergeJoin extends Join {
 		return outBatch;
 	}
 
-	// private ArrayList<Tuple> getNextPartition() {
-	// 	System.out.println("SMJ: Generatin next partition");
-	// 	/** 
-	// 		we keep reading in right tuples until there is a value change
-	// 		Remember we always get right by partition
-	// 	*/
-	// 	ArrayList<Tuple> partition = new ArrayList<Tuple>();
-	// 	int compResult = 0;
+	private ArrayList<Tuple> getNextPartition() {
+		System.out.println("SMJ: Generatin next partition");
+		/** 
+			we keep reading in right tuples until there is a value change
+			Remember we always get right by partition
+		*/
+		ArrayList<Tuple> partition = new ArrayList<Tuple>();
+		int compResult = 0;
 
-	// 	// if (rightBatch == null || rightBatch.isEmpty()) {
-	// 	// 	return partition;
-	// 	// }
+		if (rightBatch == null || rightBatch.isEmpty()) {
+			return partition;
+		}
 
-	// 	// else {//rightBatch has something: 1. get next tuple according to rcurs; 2. tuple has reached the end of partition: get new partition
-	// 	if (nextTuple == null) {//if there is no nextTuple, it is the first time we create nextTuple
-	// 		if (rcurs == rightBatch.size()) { // get a batch
-	// 			rightBatch = sortedRight.next();
-	// 			if (rightBatch == null) { // if nothing more in right batch, reached the end of right table
-	// 				// System.out.println("SMJ: When do you tmd come here????");
-	// 				eosr = true;
-	// 				if (checkPartitionSize(partition)) {
-	// 					System.exit(0);
-	// 				}
-	// 				return partition;
-	// 			}
-	// 			rcurs = 0;
-	// 		}
-	// 		nextTuple = rightBatch.get(rcurs); //get nextTuple
-	// 		if (nextTuple == null) {
-	// 			return partition;
-	// 		}
-	// 		// rcurs++;
-	// 	}
+		// else {//rightBatch has something: 1. get next tuple according to rcurs; 2. tuple has reached the end of partition: get new partition
+		if (nextTuple == null) {//if there is no nextTuple, it is the first time we create nextTuple
+			if (rcurs == rightBatch.size()) { // get a batch
+				rightBatch = sortedRight.next();
+				if (rightBatch == null) { // if nothing more in right batch, reached the end of right table
+					// System.out.println("SMJ: When do you tmd come here????");
+					eosr = true;
+					if (checkPartitionSize(partition)) {
+						System.exit(0);
+					}
+					return partition;
+				}
+				rcurs = 0;
+			}
+			nextTuple = rightBatch.get(rcurs); //get nextTuple
+			if (nextTuple == null) {
+				return partition;
+			}
+			rcurs++;
+		}
 
-	// 	while (compResult == 0) {
-	// 		rcurs++;
-	// 		//System.out.println("SMJ: adding this tuple into partition");
-	// 		//Debug.PPrint(next);
-	// 		partition.add(nextTuple); // add in to partion, check if next partition has the same value
-	// 		Debug.PPrint(nextTuple);
+		while (compResult == 0) {
+			// rcurs++;
+			//System.out.println("SMJ: adding this tuple into partition");
+			//Debug.PPrint(next);
+			partition.add(nextTuple); // add in to partion, check if next partition has the same value
+			Debug.PPrint(nextTuple);
 
-	// 		// Get next right tuple: 1. get next right tuple using left cursor; 2. right tuple is the end of the batch size; get next batch
-	// 		if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
-	// 			rightBatch = sortedRight.next(); //get next rightBatch
-	// 			if (rightBatch == null || rightBatch.isEmpty()) { //if next rightBatch is null
-	// 				// System.out.println("SMJ: When do you come here ahhhhhh");
-	// 				eosr = true;
-	// 				return partition; //next Batch 
-	// 			}
-	// 			rcurs = 0;
-	// 		}
-	// 		nextTuple = rightBatch.get(rcurs);
-	// 		// rcurs++;
-	// 		//System.out.println("SMJ: checking two tuples");
-	// 		//Debug.PPrint(partition.get(0));
-	// 		//Debug.PPrint(next);
-	// 		compResult = Tuple.compareTuples(partition.get(0), nextTuple, rightIndices, rightIndices);
-	// 	}
-	// 	// System.out.println("SMJ: Finish generating right partition");
-	// 	// System.out.println();
-	// 	if (checkPartitionSize(partition)) {
-	// 		System.exit(0);
-	// 	};
-	// 	return partition;
-	// }
+			// Get next right tuple: 1. get next right tuple using left cursor; 2. right tuple is the end of the batch size; get next batch
+			if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
+				rightBatch = sortedRight.next(); //get next rightBatch
+				if (rightBatch == null || rightBatch.isEmpty()) { //if next rightBatch is null
+					// System.out.println("SMJ: When do you come here ahhhhhh");
+					eosr = true;
+					return partition; //next Batch 
+				}
+				rcurs = 0;
+			}
+			nextTuple = rightBatch.get(rcurs);
+			rcurs++;
+			//System.out.println("SMJ: checking two tuples");
+			//Debug.PPrint(partition.get(0));
+			//Debug.PPrint(next);
+			compResult = Tuple.compareTuples(partition.get(0), nextTuple, rightIndices, rightIndices);
+		}
+		// System.out.println("SMJ: Finish generating right partition");
+		// System.out.println();
+		if (checkPartitionSize(partition)) {
+			System.exit(0);
+		};
+		return partition;
+	}
 
 	// private ArrayList<Tuple> getNextPartition() {
     //     ArrayList<Tuple> partition = new ArrayList<>();
@@ -360,62 +360,31 @@ public class SortMergeJoin extends Join {
 	// }
 	
 
-	private ArrayList<Tuple> getNextPartition() {
-        ArrayList<Tuple> partition = new ArrayList<>();
-        int comparisionResult = 0;
-        if (nextTuple == null) {
-            nextTuple = readNextRightTuple();
-            if (nextTuple == null) {
-                return partition;
-            }
-        }
+	// private ArrayList<Tuple> getNextPartition() {
+    //     ArrayList<Tuple> partition = new ArrayList<>();
+    //     int comparisionResult = 0;
+    //     if (nextTuple == null) {
+    //         nextTuple = readNextRightTuple();
+    //         if (nextTuple == null) {
+    //             return partition;
+    //         }
+    //     }
 
-        // Continues until the next tuple carries a different value.
-        while (comparisionResult == 0) {
-            partition.add(nextTuple);
+    //     // Continues until the next tuple carries a different value.
+    //     while (comparisionResult == 0) {
+    //         partition.add(nextTuple);
 
-            nextTuple = readNextRightTuple();
-            if (nextTuple == null) {
-                break;
-            }
-            comparisionResult = Tuple.compareTuples(partition.get(0), nextTuple, rightIndices, rightIndices);
-        }
+    //         nextTuple = readNextRightTuple();
+    //         if (nextTuple == null) {
+    //             break;
+    //         }
+    //         comparisionResult = Tuple.compareTuples(partition.get(0), nextTuple, rightIndices, rightIndices);
+    //     }
 
-        return partition;
-	}
+    //     return partition;
+	// }
 	
-	private Tuple readNextRightTuple() {
-        // Reads another batch if necessary.
-        if (rightBatch == null) {
-            return null;
-        } else if (rcurs == rightBatch.size()) {
-            rightBatch = right.next();
-            rcurs = 0;
-        }
-
-        // Checks whether the right batch still has tuples left.
-        if (rightBatch == null || rightBatch.size() <= rcurs) {
-            return null;
-        }
-
-        // Reads the next tuple.
-        Tuple next = rightBatch.get(rcurs);
-        rcurs++;
-        return next;
-    }
-
-	// Do nothing, just report an error message
-	private boolean checkPartitionSize(ArrayList<Tuple> partition) {
-		//TODO: check if PartitionSize exceeds numBuff
-		int numTuples = batchSize * (numBuff - 2);
-		if (partition.size() > numTuples) {
-			System.out.println("A partition size is larger than buffer size, try larger buffer size");
-			return true;
-		}
-		return false;
-	}
-
-	// private Tuple readNextRight() {
+	// private Tuple readNextRightTuple() {
     //     // Reads another batch if necessary.
     //     if (rightBatch == null) {
     //         return null;
@@ -434,6 +403,17 @@ public class SortMergeJoin extends Join {
     //     rcurs++;
     //     return next;
     // }
+
+	// Do nothing, just report an error message
+	private boolean checkPartitionSize(ArrayList<Tuple> partition) {
+		//TODO: check if PartitionSize exceeds numBuff
+		int numTuples = batchSize * (numBuff - 2);
+		if (partition.size() > numTuples) {
+			System.out.println("A partition size is larger than buffer size, try larger buffer size");
+			return true;
+		}
+		return false;
+	}
 
 	public boolean close() {
 		sortedLeft.close();
