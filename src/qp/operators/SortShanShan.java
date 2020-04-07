@@ -307,7 +307,4 @@ public class SortShanShan extends Operator {
         }
         return true;
     }
-
-
-
 }
