@@ -259,7 +259,7 @@ public class PlanCost {
             System.exit(1);
         }
         StringTokenizer tokenizer = new StringTokenizer(line);
-        System.out.println("I am the first " + tokenizer.countTokens());
+
         if (tokenizer.countTokens() != 1) {
             System.out.println("incorrect format of statastics file " + filename);
             System.exit(1);
@@ -273,7 +273,6 @@ public class PlanCost {
             System.exit(1);
         }
         tokenizer = new StringTokenizer(line);
-        System.out.println("I am the second " + tokenizer.countTokens() + "numAttr " + numAttr) ;
         if (tokenizer.countTokens() != numAttr) {
             System.out.println("incorrect format of statastics file " + filename);
             System.exit(1);

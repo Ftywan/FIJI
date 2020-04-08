@@ -9,8 +9,9 @@ import qp.utils.Schema;
 import qp.utils.Tuple;
 
 
-// TODO: error when small number of buffers
-
+/**
+ * This class is used to define a distinct operator.
+ */
 public class Distinct extends Operator {
     private final ArrayList<Attribute> projectedlist;
     ArrayList<Integer> projectedIndices = new ArrayList<Integer>();
@@ -20,6 +21,7 @@ public class Distinct extends Operator {
     private int numOfBuffer;
     private boolean eos = false;
     private Batch in = null;
+    // batch index is the index for tuple on each batch.
     private int batchIndex = 0;
     private Tuple lastTuple = null; // To keep track of lastTuple
 
@@ -53,11 +55,17 @@ public class Distinct extends Operator {
         return sortedFile.open(); // the file is now sorted and ready to use
     }
 
+    /**
+     * Sorting based approach is used to implement Distinct.
+     * Distinct is done by pairwise comparision on a sorted relation.
+     * @return
+     */
+
     public Batch next() {
         if (eos) {
             close();
             return null;
-        } else if(in == null) {//where there is not in batch
+        } else if(in == null) {//when there is nothing in batch, you open the next batch
             in = sortedFile.next();
         }
         // add in the first tuple into the out batch because it is used as
@@ -66,9 +74,10 @@ public class Distinct extends Operator {
         Tuple currentTuple = in.get(batchIndex);
         out.add(currentTuple);
         batchIndex++;
-
+        // Main duplicate elimination process. we keep track of the last tuple and always look for the next tuple if there is any.
+        // Since the relation is sorted, we can safely output the current tuple as a distinct one if it is different from the previous tuple.
         while (!out.isFull()) {
-            if (batchIndex >= in.size()) {//batchIndex exceeds inbatch size. we reach the end of the schema
+            if (batchIndex >= in.size()) {//batchIndex exceeds inbatch size. we reach the end of the schema.
                 eos = true;
                 break;
             }
@@ -83,7 +92,6 @@ public class Distinct extends Operator {
 
             if (batchIndex == batchSize) {//when one batch is read completely
                 in = sortedFile.next();
-                //Debug.PPrint(in);
                 if (in == null) {
                     eos = true;
                     break;
