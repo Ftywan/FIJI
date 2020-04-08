@@ -37,7 +37,6 @@ public class BlockNestedJoin extends Join{
 
 	// initialization of the Block Nested Join
 	public boolean open() {
-		System.out.println("BNJ opening");
 		tupleSize = schema.getTupleSize();
 		batchSize = Batch.getPageSize() / tupleSize;
 
@@ -90,7 +89,6 @@ public class BlockNestedJoin extends Join{
 	// return the next tuple of joined results
 	public Batch next() {
 		int i, j;
-		System.out.println("next entered");
 		if (endOfLeftStream) {
 			return null;
 		}
@@ -125,7 +123,6 @@ public class BlockNestedJoin extends Join{
 
 				// initiate reading the right table for the current block
 				try {
-					System.out.println("BNJ: entering this loop");
 					in = new ObjectInputStream(new FileInputStream(rightFileName));
 					endOfRightStream = false;
 				} catch (IOException io) {
@@ -193,7 +190,6 @@ public class BlockNestedJoin extends Join{
 	}
 
 	public boolean close() {
-		System.out.println("Closing BNL");
 		File f = new File(rightFileName);
 		f.delete(); // delete the intermediate table
 		return true;

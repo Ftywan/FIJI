@@ -7,10 +7,9 @@
 package qp.operators;
 
 public class JoinType {
-    public static final int NESTEDJOIN = 2;
-    public static final int BLOCKNESTED = 1;
+    public static final int NESTEDJOIN = 1;
+    public static final int BLOCKNESTED = 2;
     public static final int SORTMERGE = 0;
-
     public static final int HASHJOIN = 3;
 
     public static int numJoinTypes() {

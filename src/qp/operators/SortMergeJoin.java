@@ -5,7 +5,6 @@ import qp.utils.Batch;
 import qp.utils.Condition;
 import qp.utils.Tuple;
 
-import java.io.*;
 import java.util.ArrayList;
 
 /** Creating a Join:
@@ -26,32 +25,58 @@ import java.util.ArrayList;
 
 public class SortMergeJoin extends Join {
 
+	// The number of tuples we can have per page
 	int batchSize;
-	Batch outBatch;
-	ArrayList<Integer> leftIndices;
-	ArrayList<Integer> rightIndices;
-	ArrayList<Attribute> leftAttributes;
-	ArrayList<Attribute> rightAttributes;
-	Sort sortedLeft;
-	Sort sortedRight;
+
+	// The buffer for the left input page
 	Batch leftBatch;
+	// The buffer for the right input page
 	Batch rightBatch;
-	int lcurs;
-	int rcurs;
-	boolean eosl = false;
-	boolean eosr = false;
+	// Everytime, we join a right partition with one left tuple
 	ArrayList<Tuple> rightPartition;
+	// The output page
+	Batch outBatch;
+
+	// The list of integer indices of join attributes from left table
+	ArrayList<Integer> leftIndices;
+	// The list of integer indices of join attributes from right table
+	ArrayList<Integer> rightIndices;
+	// The list of join attributes from left table
+	ArrayList<Attribute> leftAttributes;
+	// The list of join attributes from right table
+	ArrayList<Attribute> rightAttributes;
+
+	// The left table that is sorted
+	Sort sortedLeft;
+	// The right table that is sorted
+	Sort sortedRight;
+
+	// Cursor for left page
+	int lcurs;
+	// Cursor for right page
+	int rcurs;
+	// Cursor for right partition 
 	int partitionEosr;
+
+	// Indicates whether end of left table is reached
+	boolean eosl = false;
+	// Inddicates whether end of right table is reached
+	boolean eosr = false;
+
+	// The left tuple that is being read from left input page
 	Tuple leftTuple;
+	// The right tuple that is being read from right input page
 	Tuple rightTuple;
-	// Tuple lastLeftTuple;
+
+	// The next left tuple from current left tuple
 	Tuple nextLeftTuple;
-	static int fileNumber = 0; 
-	String rightFileName; 
+	// The next right tuple from current right tuple
 	Tuple nextTuple = null;
 
-
-
+	/**
+	 * Initialise a new join operator using Sort-Merge Join algorith
+	 * @param jn jn is the base join operator
+	 */
 	public SortMergeJoin(Join jn) {
 		super(jn.getLeft(), jn.getRight(), jn.getConditionList(), jn.getOpType());
 		schema = jn.getSchema();
@@ -59,12 +84,15 @@ public class SortMergeJoin extends Join {
 		numBuff = jn.getNumBuff();
 	}
 
+	/**
+	 * Sort left and right and store as files
+	 */
 	public boolean open() {
 		/** select number of tuples per batch **/
 		int tuplesize = schema.getTupleSize();
 		batchSize = Batch.getPageSize() / tuplesize;
 
-		/** find indices attributes of join conditions **/
+		// Get the attributes and indices of attributes of join conditions
 		leftIndices = new ArrayList<>();
 		rightIndices = new ArrayList<>();
 		leftAttributes = new ArrayList<>();
@@ -78,31 +106,38 @@ public class SortMergeJoin extends Join {
 			rightIndices.add(right.getSchema().indexOf(rightattr));
 		}
 
+		// Sort both left and right table
 		sortedLeft = new Sort(left, leftAttributes, numBuff);
 		sortedLeft.open();
 		sortedRight = new Sort(right, rightAttributes, numBuff);
 		sortedRight.open();
 
-
-		// Add condition to check whether both sortedLeft and sortedRight are open
 		return true;
 	}
 
+	/**
+	 * Perform merging:
+	 * 1. Read in left page, then read in one tuple from left page
+	 * 2. Read in one partition from right table. A partition have the join keys of the same values. Then read in one tuple from right page
+	 * 3. Compare their join keys and advance the one with smaller values until equality is found
+	 * 4. Add join results (current left tuple join with all tuples in right partition), return output page whenever it is full
+	 * 5. Continue joining results or get next left/right tuples to repeat step 3 - 4
+	 */
 	public Batch next() {
-		// Read one left page and always read in partition into the memory
+		// Returns null if either tables have reached the end
 		if (eosl || eosr) {
 			close();
 			return null;
 		}
+
+		// When first calling .next(), leftBatch and rightBatch are both null
 		if (leftBatch == null) {
 			leftBatch = sortedLeft.next();
 			if (leftBatch == null || leftBatch.isEmpty()) {
 				eosl = true;
 				return null;
 			}
-			// read in next left tuple
 			leftTuple = leftBatch.get(lcurs);
-			Debug.PPrint(leftTuple);
 		}
 		if (rightBatch == null) {
 			rightBatch = sortedRight.next();
@@ -112,35 +147,30 @@ public class SortMergeJoin extends Join {
 			}
 			rightPartition = getNextPartition();
 			if (checkPartitionSize(rightPartition)) {
-				System.exit(0);
+				System.exit(0); // if exceeds the buffers available, terminate the process
 			};
 			partitionEosr = 0;
 			rightTuple = rightPartition.get(0);
 		}
+
+		// The output page
 		Batch outBatch = new Batch(batchSize);
 		while (!outBatch.isFull()) {
 			int compareResult = Tuple.compareTuples(leftTuple, rightTuple, leftIndices, rightIndices);
 			if (compareResult == 0) { // left and right tuples are equal
-				System.out.println("SMJ: Equal found, they are:============");
-				Debug.PPrint(leftTuple);
-				Debug.PPrint(rightTuple);
 				outBatch.add(leftTuple.joinWith(rightTuple)); // add join result into outBatch, continues to next comparison
-				if (partitionEosr < rightPartition.size() - 1) {//read next tuple from right partition
+				if (partitionEosr < rightPartition.size() - 1) {// read next tuple from right partition
 					partitionEosr++;
-					System.out.println("partionEsor is " + partitionEosr);
 					rightTuple =  rightPartition.get(partitionEosr);
 				}
-				else if (partitionEosr == rightPartition.size()-1) {//finish reading right partition
-					System.out.println("partionEsor is " + partitionEosr);
+				else if (partitionEosr == rightPartition.size()-1) {// finish reading right partition
 					lcurs++;
-					if (lcurs == leftBatch.size()) {//left cursor reached the size of leftBatch
-						System.out.println("SM: Next left batch is:");
+					if (lcurs == leftBatch.size()) {// left cursor reached the size of leftBatch
 						leftBatch = sortedLeft.next();
 						if (leftBatch == null || leftBatch.isEmpty()) {
 							eosl = true;
 							break;
 						}
-						Debug.PPrint(leftBatch);
 						lcurs = 0;
 					}
 					nextLeftTuple = leftBatch.get(lcurs);
@@ -148,9 +178,6 @@ public class SortMergeJoin extends Join {
 						eosl = true;
 						break;
 					}
-					System.out.println("SMJ: Checking two consecutive left tuples");
-					Debug.PPrint(leftTuple);
-					Debug.PPrint(nextLeftTuple);
 					compareResult = Tuple.compareTuples(nextLeftTuple, leftTuple, leftIndices, leftIndices);
 					leftTuple = nextLeftTuple;
 					if (compareResult == 0) {// two consecutive tuples has equal values
@@ -168,7 +195,6 @@ public class SortMergeJoin extends Join {
 				}
 			}
 			else if (compareResult > 0) { // left tuple is larger, advance right, remember for right we always advance by partition
-				System.out.println("SMJ: Advance right");
 				rightPartition = getNextPartition(); // get next right partition
 				if (rightPartition == null || rightPartition.isEmpty() || rightPartition.size() == 0) {
 					eosr = true;
@@ -178,30 +204,28 @@ public class SortMergeJoin extends Join {
 				rightTuple = rightPartition.get(partitionEosr);
 			}
 			else if (compareResult < 0) { // right tuple is larger, advance left
-				System.out.println("SMJ: Advance left ");
 				lcurs++;
 				if (lcurs == leftBatch.size()) { // no more tuples to read in leftBatch
-					System.out.println("SM: Next left batch is:");
 					leftBatch = sortedLeft.next(); //read in new Batch
 					if (leftBatch == null || leftBatch.isEmpty()) {
 						eosl = true;
 						break;
 					}
-					Debug.PPrint(leftBatch);
 					lcurs = 0; // set cursor back to 0
 				}
 				leftTuple = leftBatch.get(lcurs);
-				Debug.PPrint(leftTuple);
 			}
 		}
 		return outBatch;
 	}
 
+	/**
+	 * Keep reading in right tuples until there is a value change
+	 * Remember we always get right by partition
+	 * @return a right partition that is to be compared with left tuple
+	 */
+
 	private ArrayList<Tuple> getNextPartition() {
-		/** 
-			we keep reading in right tuples until there is a value change
-			Remember we always get right by partition
-		*/
 		ArrayList<Tuple> partition = new ArrayList<Tuple>();
 		int compResult = 0;
 
@@ -213,10 +237,9 @@ public class SortMergeJoin extends Join {
 			if (rcurs == rightBatch.size()) { // get a batch
 				rightBatch = sortedRight.next();
 				if (rightBatch == null) { // if nothing more in right batch, reached the end of right table
-					// System.out.println("SMJ: When do you tmd come here????");
 					eosr = true;
 					if (checkPartitionSize(partition)) {
-						System.exit(0);
+						System.exit(0); // if exceeds the buffers available, terminate the process
 					}
 					return partition;
 				}
@@ -231,13 +254,11 @@ public class SortMergeJoin extends Join {
 
 		while (compResult == 0) {
 			partition.add(nextTuple); // add in to partion, check if next partition has the same value
-			Debug.PPrint(nextTuple);
 
 			// Get next right tuple: 1. get next right tuple using left cursor; 2. right tuple is the end of the batch size; get next batch
 			if (rcurs == rightBatch.size()) {//current rightBatch has reached the end
 				rightBatch = sortedRight.next(); //get next rightBatch
 				if (rightBatch == null || rightBatch.isEmpty()) { //if next rightBatch is null
-					// System.out.println("SMJ: When do you come here ahhhhhh");
 					eosr = true;
 					return partition; //next Batch 
 				}
@@ -248,21 +269,28 @@ public class SortMergeJoin extends Join {
 			compResult = Tuple.compareTuples(partition.get(0), nextTuple, rightIndices, rightIndices);
 		}
 		if (checkPartitionSize(partition)) {
-			System.exit(0);
+			System.exit(0); // if exceeds the buffers available, terminate the process
 		};
 		return partition;
 	}
 
-	// Report an error message, stop the execution
+	/**
+	 * To check wether a partition size has exceeded the size of buffers available
+	 * @param partition
+	 * @return boolean to indicate whether it has exceeded
+	 */
 	private boolean checkPartitionSize(ArrayList<Tuple> partition) {
 		int numTuples = batchSize * (numBuff - 2);
 		if (partition.size() > numTuples) {
-			System.out.println("A partition size is larger than buffer size, try larger buffer size");
+			System.out.println("A partition size is larger than buffer size, try larger buffer size"); // Report an error message, stop the execution
 			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Close this join
+	 */
 	public boolean close() {
 		sortedLeft.close();
 		sortedRight.close();

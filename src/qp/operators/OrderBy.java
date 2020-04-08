@@ -17,8 +17,6 @@ import qp.utils.Schema;
  *  In close(): close the sorted file
  */
 
- //TODO: Add in those exception catch! seems like nothing to catch?
-
 public class OrderBy extends Operator {
     
     Operator base;

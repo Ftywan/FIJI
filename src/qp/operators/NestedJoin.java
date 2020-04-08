@@ -43,7 +43,6 @@ public class NestedJoin extends Join {
      **/
     public boolean open() {
         /** select number of tuples per batch **/
-        System.out.println("NL opened");
         int tuplesize = schema.getTupleSize();
         batchsize = Batch.getPageSize() / tuplesize;
 
@@ -122,7 +121,7 @@ public class NestedJoin extends Join {
                  ** scanning of right table
                  **/
                 try {
-                    System.out.println("NL: Reading in right file, Setting eosr to be false");
+                    // System.out.println("NL: Reading in right file, Setting eosr to be false");
                     in = new ObjectInputStream(new FileInputStream(rfname));
                     eosr = false;
                 } catch (IOException io) {
@@ -130,8 +129,6 @@ public class NestedJoin extends Join {
                     System.exit(1);
                 }
             }
-            //System.out.println("NL: endOfRightStream is ");
-            //System.out.println(eosr);
 
             while (eosr == false) {
                 try {
