@@ -41,8 +41,6 @@ public class Distinct extends Operator {
      */
     public boolean open() {
         batchSize  = Batch.getPageSize() / schema.getTupleSize();
-        //System.out.print("Distinct: ");
-        //System.out.println(projectedlist);
         sortedFile = new Sort(base, projectedlist, numOfBuffer);
 
         Schema baseSchema = base.getSchema();
@@ -52,8 +50,6 @@ public class Distinct extends Operator {
             int index = baseSchema.indexOf(attr.getBaseAttribute());
             projectedIndices.add(index);
         }
-        //System.out.print("Distinct: What are projectedIndices");
-        //System.out.println(projectedIndices);
         return sortedFile.open(); // the file is now sorted and ready to use
     }
 
@@ -68,8 +64,6 @@ public class Distinct extends Operator {
         // seed for duplication elimination.
         Batch out = new Batch(batchSize);
         Tuple currentTuple = in.get(batchIndex);
-        //System.out.println("Distinct: adding to outBatch");
-        //Debug.PPrint(in);
         out.add(currentTuple);
         batchIndex++;
 
@@ -83,13 +77,7 @@ public class Distinct extends Operator {
             currentTuple = in.get(batchIndex);
             int compareResult = Tuple.compareTuples(currentTuple, lastTuple, projectedIndices, projectedIndices);
             if (compareResult != 0) {
-                // System.out.println("Distinct: adding to outBatch");
-                // Debug.PPrint(lastTuple);
-                // Debug.PPrint(currentTuple);
                 out.add(currentTuple);
-                // System.out.println("Distinct: current outbatch is");
-                // Debug.PPrint(out);
-                // System.out.println();
             }
             batchIndex++;
 
