@@ -20,21 +20,28 @@ import qp.utils.Schema;
 public class OrderBy extends Operator {
     
     Operator base;
-    ArrayList<Attribute> orderedlist; // Set of attributes that are to be ordered
 
-    // Corresponding index of the attributes in above list
-    // Use it to get the attributes from schema
+    // Set of attributes that are to be ordered
+    ArrayList<Attribute> orderedlist;
+    // Attributes list of the schema to be ordered 
     ArrayList<Integer> asIndices = new ArrayList<>();
 
-    // How many tuples each page can have
+    // Number of tuples per page
     int batchSize;
 
-    // How many buffers are available for performing this operation
-    // Get the numBuff for External Sort
+    // Number of buffers available
     int numBuff;
+
+    // Sorted file ready to be called
     Sort sortedFile;
+
+    // Indicate whether the end of table is reached
     boolean eos = false;
+
+    // Input page that is read into memory
     Batch inBatch = null;
+
+    // Index used to get tuples from input 
     int inIndex = 0;
 
     public OrderBy(Operator base, ArrayList<Attribute> orderedlist) {
@@ -43,7 +50,10 @@ public class OrderBy extends Operator {
         this.orderedlist = orderedlist;
         numBuff = BufferManager.getNumBuffer();
     }
-    
+
+    /**
+     * Call External Sort to get sorted table, ready to be output
+     */
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
         for (int i = 0; i < orderedlist.size(); i++) {
@@ -55,6 +65,9 @@ public class OrderBy extends Operator {
         return true;
     }
 
+    /**
+     * Output sorted results page by page
+     */
     public Batch next() {
         if (eos) {
             close();
