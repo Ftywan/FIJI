@@ -4,7 +4,7 @@ This is the repository of an SPJ query prosessing engine. It consiits of scanner
 
 #### Background and Clarification
 
-This repository is an archive of the course project of CS3223: Database System Implementation, AY2019-2020, Sem 2. 
+This repository is an archive of the course project of CS3223: Database System Implementation, AY2019-2020, Sem 2, National University of Singapore.
 
 The professor of the course is Prof. Tan Kian Lee. Here is his website: https://www.comp.nus.edu.sg/~tankl/
 
