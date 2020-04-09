@@ -8,6 +8,10 @@ This repository is an archive of the course project of CS3223: Database System I
 
 The professor of the course is Prof. Tan Kian Lee. Here is his website: https://www.comp.nus.edu.sg/~tankl/
 
+Collaborator to this project:
+@LevanaRu
+@treetree33
+
 #### Parser
 
 Javacup is used as the parser in this project. For more information, please check http://www.cs.princeton.edu/~appel/modern/java/CUP.
