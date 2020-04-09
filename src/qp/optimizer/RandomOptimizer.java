@@ -261,10 +261,12 @@ public class RandomOptimizer {
                 Operator neighborPlan = getNeighbor((Operator) currentPlan.clone());
                 System.out.println("\n---------------SA Neighbor---------------");
                 Debug.PPrint(neighborPlan);
-                System.out.print("\n");
                 PlanCost neighborCost = new PlanCost();
                 PlanCost currentCost = new PlanCost();
-                long deltaCost = neighborCost.getCost(neighborPlan) - currentCost.getCost(currentPlan);
+                long neighborCostValue = neighborCost.getCost(neighborPlan);
+                System.out.println("   "+ String.valueOf(neighborCostValue));
+                System.out.println("\n");
+                long deltaCost = neighborCostValue - currentCost.getCost(currentPlan);
 
                 if (deltaCost <= 0) {
                     currentPlan = neighborPlan;
@@ -290,7 +292,7 @@ public class RandomOptimizer {
                 stableTime = 0;
             }
         }
-        System.out.println("----------------Iterative Improvement Final Plan----------------\n");
+        System.out.println("----------------Simulated Annealing Final Plan----------------\n");
         Debug.PPrint(minCostPlan);
         System.out.println("\n");
         return minCostPlan;

@@ -311,12 +311,11 @@ public class PlanCost {
         long numOfPages = outputTuples / numOfTuplesInOnePage;
         long numOfBuffer = BufferManager.getNumBuffer();
         cost += (getExternalSortCost(numOfPages, numOfBuffer) + numOfPages);
-        return outputTuples;
+        return calculateCost(node.getBase());
     }
 
     /**
      * Calculates the cost of performing an external sort.
-     *
      * @param numOfPages is the number of input pages.
      * @param numOfBuffer is the number of buffer pages available.
      * @return the cost of this sorting process.
