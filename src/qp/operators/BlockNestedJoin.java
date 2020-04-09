@@ -7,6 +7,7 @@ import qp.utils.Tuple;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class BlockNestedJoin extends Join{
 
@@ -38,6 +39,10 @@ public class BlockNestedJoin extends Join{
 	// initialization of the Block Nested Join
 	public boolean open() {
 		tupleSize = schema.getTupleSize();
+		if (tupleSize > Batch.getPageSize()) {
+			System.out.println("Page size too small.");
+			return false;
+		}
 		batchSize = Batch.getPageSize() / tupleSize;
 
 		leftIndex = new ArrayList<>();
@@ -62,13 +67,21 @@ public class BlockNestedJoin extends Join{
 
 		block = new ArrayList<>();
 
+		int leftTupleSize = left.getSchema().getTupleSize();
+		int rightTupleSize = right.getSchema().getTupleSize();
+
+		if (leftTupleSize > Batch.getPageSize() || rightTupleSize > Batch.getPageSize()) {
+			System.out.println("Page size too small.");
+			return false;
+		}
+
 		// if the right table is not in the hard drive, materialize it
 		Batch materializePage;
 		if (! right.open()) {
 			return false;
 		} else {
 			fileNumber ++;
-			rightFileName = "BNJtemp-" + fileNumber;
+			rightFileName = "BNJtemp-" + String.valueOf(fileNumber);
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rightFileName));
 				while ((materializePage = right.next()) != null) {
@@ -90,6 +103,7 @@ public class BlockNestedJoin extends Join{
 	public Batch next() {
 		int i, j;
 		if (endOfLeftStream) {
+			close();
 			return null;
 		}
 		outputPage = new Batch(batchSize); // the page for output
@@ -99,16 +113,16 @@ public class BlockNestedJoin extends Join{
 			 * before that we will check the join-able pairs in the so-far loaded tuples
 			 */
 			if (leftCursor == 0 && endOfRightStream == true) {
-				block.clear();
+				block = new ArrayList<Tuple>();
 				/** NumBuffer - 2 pages in the buffer is available for caching the left table **/
 				for (int a = 0; a < numBuff - 2; a++) {
 					/** load each page into the buffer **/
 					leftInputPage = left.next();
 					/** there is no data in the left table **/
-					if (leftInputPage != null) {
-						block.addAll(leftInputPage.getTuples());
-					} else {
+					if (leftInputPage == null || leftInputPage.isEmpty()) {
 						break;
+					} else {
+						block.addAll(leftInputPage.getTuples());
 					}
 				} // block loading finished
 
@@ -118,7 +132,8 @@ public class BlockNestedJoin extends Join{
 				 */
 				if (block.isEmpty()) {
 					endOfLeftStream = true;
-					return outputPage;
+//					return outputPage;
+					return null;
 				}
 
 				// initiate reading the right table for the current block
@@ -130,6 +145,7 @@ public class BlockNestedJoin extends Join{
 					System.exit(1);
 				}
 			}
+
 
 			// still under the progress of comparing the current left with the whole right table
 			while (endOfRightStream == false) {
@@ -173,7 +189,7 @@ public class BlockNestedJoin extends Join{
 				} catch (EOFException e) { // the right table is all processed
 					try {
 						in.close();
-					} catch (IOException io ) {
+					} catch (IOException io) {
 						System.out.println("BlockNestedJoin: Error in reading temporary file");
 					}
 					endOfRightStream = true;
@@ -188,6 +204,7 @@ public class BlockNestedJoin extends Join{
 		}
 		return outputPage;
 	}
+
 
 	public boolean close() {
 		File f = new File(rightFileName);

@@ -8,7 +8,6 @@ public class BufferManager {
 
     static int numBuffer;
     static int numJoin;
-
     static int buffPerJoin;
 
     public BufferManager(int numBuffer, int numJoin) {
