@@ -162,7 +162,7 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = (int) (leftpages + Math.ceil(leftpages/(numbuff - 2)) * rightpages);
+                joincost = (int) (leftpages + Math.ceil((float)leftpages/(numbuff - 2)) * rightpages);
                 break;
             case JoinType.HASHJOIN:
                 joincost = 3 * (leftpages + rightpages);

@@ -207,7 +207,6 @@ public class RandomInitialPlan {
 
     /**
      * Creates a distinct operator: 
-     * TODO: CHANGE THIS!!!! Should be correct, will come back
      */
     private void createDistinctOperator() {
         if (!sqlquery.getisDistinct()) {
