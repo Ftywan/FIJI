@@ -137,11 +137,11 @@ public class Debug {
         for (int i = 0; i < t.data().size(); i++) {
             Object data = t.dataAt(i);
             if (data instanceof Integer) {
-                System.out.print((Integer) data + "\t");
+                System.out.print(data + "\t");
             } else if (data instanceof Float) {
-                System.out.print((Float) data + "\t");
+                System.out.print(data + "\t");
             } else {
-                System.out.print(((String) data) + "\t");
+                System.out.print(data + "\t");
             }
         }
         System.out.println();

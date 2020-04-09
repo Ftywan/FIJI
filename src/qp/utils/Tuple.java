@@ -36,10 +36,7 @@ public class Tuple implements Serializable {
     public boolean checkJoin(Tuple right, int leftindex, int rightindex) {
         Object leftData = dataAt(leftindex);
         Object rightData = right.dataAt(rightindex);
-        if (leftData.equals(rightData))
-            return true;
-        else
-            return false;
+        return leftData.equals(rightData);
     }
 
     /**

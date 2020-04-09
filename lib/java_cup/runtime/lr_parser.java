@@ -379,8 +379,8 @@ public abstract class lr_parser {
 	if (((Symbol)info).left != -1)
 	System.err.println(" at character " + ((Symbol)info).left + 
 			   " of input");
-	else System.err.println("");
-      else System.err.println("");
+	else System.err.println();
+      else System.err.println();
     }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -961,7 +961,7 @@ public abstract class lr_parser {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Lookahead Symbols used for attempting error recovery "parse aheads". */
-  protected Symbol lookahead[];
+  protected Symbol[] lookahead;
 
   /** Position in lookahead input buffer used for "parse ahead". */
   protected int lookahead_pos;

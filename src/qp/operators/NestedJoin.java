@@ -77,7 +77,7 @@ public class NestedJoin extends Join {
              ** into a file
              **/
             filenum++;
-            rfname = "NJtemp-" + String.valueOf(filenum);
+            rfname = "NJtemp-" + filenum;
             try {
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
                 while ((rightpage = right.next()) != null) {
@@ -91,10 +91,7 @@ public class NestedJoin extends Join {
             if (!right.close())
                 return false;
         }
-        if (left.open())
-            return true;
-        else
-            return false;
+	    return left.open();
     }
 
     /**
@@ -110,7 +107,7 @@ public class NestedJoin extends Join {
         while (!outbatch.isFull()) {
             if (lcurs == 0 && eosr == true) {
                 /** new left page is to be fetched**/
-                leftbatch = (Batch) left.next();
+                leftbatch = left.next();
                 if (leftbatch == null) {
                     eosl = true;
                     return outbatch;

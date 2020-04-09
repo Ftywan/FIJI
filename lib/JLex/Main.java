@@ -237,7 +237,7 @@ class CSpec
   Vector m_nfa_states; /* Vector of states, with index
 				 corresponding to label. */
   
-  Vector m_state_rules[]; /* An array of Vectors of Integers.
+  Vector[] m_state_rules; /* An array of Vectors of Integers.
 				    The ith Vector represents the lexical state
 				    with index i.  The contents of the ith 
 				    Vector are the indices of the NFA start
@@ -245,7 +245,7 @@ class CSpec
 				    the ith lexical state. */
 				    
 
-  int m_state_dtrans[];
+  int[] m_state_dtrans;
 
   /* DFA Machine. */
   Vector m_dfa_states; /* Vector of states, with index
@@ -256,13 +256,13 @@ class CSpec
   
   /* Accept States and Corresponding Anchors. */
   Vector m_accept_vector;
-  int m_anchor_array[];
+  int[] m_anchor_array;
 
   /* Transition Table. */
   Vector m_dtrans_vector;
   int m_dtrans_ncols;
-  int m_row_map[];
-  int m_col_map[];
+  int[] m_row_map;
+  int[] m_col_map;
 
   /* Special pseudo-characters for beginning-of-line and end-of-file. */
   static final int NUM_PSEUDO=2;
@@ -270,7 +270,7 @@ class CSpec
   int EOF; // end-of-line
 
   /** NFA character class minimization map. */
-  int m_ccls_map[];
+  int[] m_ccls_map;
 
   /* Regular expression token variables. */
   int m_current_token;
@@ -292,38 +292,38 @@ class CSpec
   boolean m_public;
   boolean m_ignorecase;
 
-  char m_init_code[];
+  char[] m_init_code;
   int m_init_read;
 
-  char m_init_throw_code[];
+  char[] m_init_throw_code;
   int m_init_throw_read;
 
-  char m_class_code[];
+  char[] m_class_code;
   int m_class_read;
 
-  char m_eof_code[];
+  char[] m_eof_code;
   int m_eof_read;
 
-  char m_eof_value_code[];
+  char[] m_eof_value_code;
   int m_eof_value_read;
 
-  char m_eof_throw_code[];
+  char[] m_eof_throw_code;
   int m_eof_throw_read;
 
-  char m_yylex_throw_code[];
+  char[] m_yylex_throw_code;
   int m_yylex_throw_read;
 
   /* Class, function, type names. */
-  char m_class_name[] = {          
+  char[] m_class_name = {
     'Y', 'y', 'l', 
     'e', 'x' 
     };
-  char m_implements_name[] = {};
-  char m_function_name[] = {
+  char[] m_implements_name = {};
+  char[] m_function_name = {
     'y', 'y', 'l', 
     'e', 'x' 
     };
-  char m_type_name[] = {
+  char[] m_type_name = {
     'Y', 'y', 't', 
     'o', 'k', 'e',
     'n'
@@ -351,14 +351,14 @@ class CSpec
 	m_lexGen = lexGen;
 
 	/* Initialize regular expression token variables. */
-	m_current_token = m_lexGen.EOS;
+	m_current_token = CLexGen.EOS;
 	m_lexeme = '\0';
 	m_in_quote = false;
 	m_in_ccl = false;
 
 	/* Initialize hashtable for lexer states. */
 	m_states = new Hashtable();
-	m_states.put(new String("YYINITIAL"),new Integer(m_states.size()));
+	m_states.put("YYINITIAL",new Integer(m_states.size()));
 
 	/* Initialize hashtable for lexical macros. */
 	m_macros = new Hashtable();
@@ -1830,25 +1830,25 @@ class CMakeNfa
 	states = m_lexGen.getStates();
 
 	/* Begin: Added for states. */
-	m_spec.m_current_token = m_lexGen.EOS;
+	m_spec.m_current_token = CLexGen.EOS;
 	m_lexGen.advance();
 	/* End: Added for states. */
 	
-	if (m_lexGen.END_OF_INPUT != m_spec.m_current_token) // CSA fix.
+	if (CLexGen.END_OF_INPUT != m_spec.m_current_token) // CSA fix.
 	  {
 	    p.m_next = rule();
 	    
 	    processStates(states,p.m_next);
 	  }
 
-	while (m_lexGen.END_OF_INPUT != m_spec.m_current_token)
+	while (CLexGen.END_OF_INPUT != m_spec.m_current_token)
 	  {
 	    /* Make state changes HERE. */
 	    states = m_lexGen.getStates();
 	
 	    /* Begin: Added for states. */
 	    m_lexGen.advance();
-	    if (m_lexGen.END_OF_INPUT == m_spec.m_current_token)
+	    if (CLexGen.END_OF_INPUT == m_spec.m_current_token)
 	      { 
 		break;
 	      }
@@ -1908,7 +1908,7 @@ class CMakeNfa
 
 	pair = CAlloc.newCNfaPair();
 
-	if (m_lexGen.AT_BOL == m_spec.m_current_token)
+	if (CLexGen.AT_BOL == m_spec.m_current_token)
 	  {
 	    anchor = anchor | CSpec.START;
 	    m_lexGen.advance();
@@ -1927,7 +1927,7 @@ class CMakeNfa
 	    end = pair.m_end;
 	  }
 
-	if (m_lexGen.AT_EOL == m_spec.m_current_token)
+	if (CLexGen.AT_EOL == m_spec.m_current_token)
 	  {
 	    m_lexGen.advance();
 	    // CSA: fixed end-of-line operator. 8-aug-1999
@@ -1988,7 +1988,7 @@ class CMakeNfa
 
 	cat_expr(pair);
 	
-	while (m_lexGen.OR == m_spec.m_current_token)
+	while (CLexGen.OR == m_spec.m_current_token)
 	  {
 	    m_lexGen.advance();
 	    cat_expr(e2_pair);
@@ -2114,9 +2114,9 @@ class CMakeNfa
 
 	term(pair);
 
-	if (m_lexGen.CLOSURE == m_spec.m_current_token
-	    || m_lexGen.PLUS_CLOSE == m_spec.m_current_token
-	    || m_lexGen.OPTIONAL == m_spec.m_current_token)
+	if (CLexGen.CLOSURE == m_spec.m_current_token
+	    || CLexGen.PLUS_CLOSE == m_spec.m_current_token
+	    || CLexGen.OPTIONAL == m_spec.m_current_token)
 	  {
 	    start = CAlloc.newCNfa(m_spec);
 	    end = CAlloc.newCNfa(m_spec);
@@ -2124,14 +2124,14 @@ class CMakeNfa
 	    start.m_next = pair.m_start;
 	    pair.m_end.m_next = end;
 
-	    if (m_lexGen.CLOSURE == m_spec.m_current_token
-		|| m_lexGen.OPTIONAL == m_spec.m_current_token)
+	    if (CLexGen.CLOSURE == m_spec.m_current_token
+		|| CLexGen.OPTIONAL == m_spec.m_current_token)
 	      {
 		start.m_next2 = end;
 	      }
 	    
-	    if (m_lexGen.CLOSURE == m_spec.m_current_token
-		|| m_lexGen.PLUS_CLOSE == m_spec.m_current_token)
+	    if (CLexGen.CLOSURE == m_spec.m_current_token
+		|| CLexGen.PLUS_CLOSE == m_spec.m_current_token)
 	      {
 		pair.m_end.m_next2 = pair.m_start;
 	      }
@@ -2166,12 +2166,12 @@ class CMakeNfa
 	    CUtility.enter("term",m_spec.m_lexeme,m_spec.m_current_token);
 	  }
 
-	if (m_lexGen.OPEN_PAREN == m_spec.m_current_token)
+	if (CLexGen.OPEN_PAREN == m_spec.m_current_token)
 	  {
 	    m_lexGen.advance();
 	    expr(pair);
 
-	    if (m_lexGen.CLOSE_PAREN == m_spec.m_current_token)
+	    if (CLexGen.CLOSE_PAREN == m_spec.m_current_token)
 	      {
 		m_lexGen.advance();
 	      }
@@ -2188,17 +2188,10 @@ class CMakeNfa
 	    start.m_next = CAlloc.newCNfa(m_spec);
 	    pair.m_end = start.m_next;
 
-	    if (m_lexGen.L == m_spec.m_current_token &&
-		Character.isLetter(m_spec.m_lexeme)) 
-	      {
-		isAlphaL = true;
-	      } 
-	    else 
-	      {
-		isAlphaL = false;
-	      }
-	    if (false == (m_lexGen.ANY == m_spec.m_current_token
-			  || m_lexGen.CCL_START == m_spec.m_current_token
+		  isAlphaL = CLexGen.L == m_spec.m_current_token &&
+				  Character.isLetter(m_spec.m_lexeme);
+	    if (false == (CLexGen.ANY == m_spec.m_current_token
+			  || CLexGen.CCL_START == m_spec.m_current_token
 			  || (m_spec.m_ignorecase && isAlphaL)))
 	      {
 		start.m_edge = m_spec.m_lexeme;
@@ -2216,7 +2209,7 @@ class CMakeNfa
 		    start.m_set.addncase(m_spec.m_lexeme);
 		  }
 		/* Match dot (.) using character class. */
-		else if (m_lexGen.ANY == m_spec.m_current_token)
+		else if (CLexGen.ANY == m_spec.m_current_token)
 		  {
 		    start.m_set.add('\n');
 		    start.m_set.add('\r');
@@ -2228,7 +2221,7 @@ class CMakeNfa
 		else
 		  {
 		    m_lexGen.advance();
-		    if (m_lexGen.AT_BOL == m_spec.m_current_token)
+		    if (CLexGen.AT_BOL == m_spec.m_current_token)
 		      {
 			m_lexGen.advance();
 
@@ -2237,7 +2230,7 @@ class CMakeNfa
 			start.m_set.add(m_spec.EOF);
 			start.m_set.complement();
 		      }
-		    if (false == (m_lexGen.CCL_END == m_spec.m_current_token))
+		    if (false == (CLexGen.CCL_END == m_spec.m_current_token))
 		      {
 			dodash(start.m_set);
 		      }
@@ -2276,15 +2269,15 @@ class CMakeNfa
 	      CUtility.enter("dodash",m_spec.m_lexeme,m_spec.m_current_token);
 	    }
 	  
-	  while (m_lexGen.EOS != m_spec.m_current_token 
-		 && m_lexGen.CCL_END != m_spec.m_current_token)
+	  while (CLexGen.EOS != m_spec.m_current_token
+		 && CLexGen.CCL_END != m_spec.m_current_token)
 	    {
 	      // DASH loses its special meaning if it is first in class.
-	      if (m_lexGen.DASH == m_spec.m_current_token && -1 != first)
+	      if (CLexGen.DASH == m_spec.m_current_token && -1 != first)
 		{
 		  m_lexGen.advance();
 		  // DASH loses its special meaning if it is last in class.
-		  if (m_spec.m_current_token == m_lexGen.CCL_END)
+		  if (m_spec.m_current_token == CLexGen.CCL_END)
 		    {
 		      // 'first' already in set.
 		      set.add('-');
@@ -2406,7 +2399,7 @@ class CMinimize
     **************************************************************/
   CSpec m_spec;
   Vector m_group;
-  int m_ingroup[];
+  int[] m_ingroup;
 
   /***************************************************************
     Function: CMinimize
@@ -3827,8 +3820,8 @@ public class Main
     **************************************************************/
   public static void main
     (
-     String arg[]
-     )
+		    String[] arg
+    )
     throws java.io.IOException
       {
 	CLexGen lg;
@@ -3862,7 +3855,7 @@ class CDTrans
   /*************************************************************
     Member Variables
     ***********************************************************/
-  int m_dtrans[];
+  int[] m_dtrans;
   CAccept m_accept;
   int m_anchor;
   int m_label;
@@ -3933,7 +3926,7 @@ class CAccept
   /***************************************************************
     Member Variables
     **************************************************************/
-  char m_action[];
+  char[] m_action;
   int m_action_read;
   int m_line_number;
 
@@ -3942,9 +3935,9 @@ class CAccept
     **************************************************************/
   CAccept
     (
-     char action[],
-     int action_read,
-     int line_number
+		    char[] action,
+		    int action_read,
+		    int line_number
      )
       {
 	int elem;
@@ -4061,7 +4054,7 @@ class CInput
   boolean m_eof_reached; /* Whether EOF has been encountered. */
   boolean m_pushback_line; 
 
-  char m_line[]; /* Line buffer. */
+  char[] m_line; /* Line buffer. */
   int m_line_read; /* Number of bytes read into line buffer. */
   int m_line_index; /* Current index into line buffer. */
 
@@ -4259,10 +4252,10 @@ class CUtility
     **************************************************************/
   static char[] doubleSize
     (
-     char oldBuffer[]
-     )
+		    char[] oldBuffer
+    )
       {
-	char newBuffer[] = new char[2 * oldBuffer.length];
+	char[] newBuffer = new char[2 * oldBuffer.length];
 	int elem;
 
 	for (elem = 0; elem < oldBuffer.length; ++elem)
@@ -4278,10 +4271,10 @@ class CUtility
     **************************************************************/
   static byte[] doubleSize
     (
-     byte oldBuffer[]
-     )
+		    byte[] oldBuffer
+    )
       {
-	byte newBuffer[] = new byte[2 * oldBuffer.length];
+	byte[] newBuffer = new byte[2 * oldBuffer.length];
 	int elem;
 
 	for (elem = 0; elem < oldBuffer.length; ++elem)
@@ -4325,14 +4318,9 @@ class CUtility
      char c
      )
       {
-	if (('0' <= c && '9' >= c)
-	    || ('a' <= c && 'f' >= c)
-	    || ('A' <= c && 'F' >= c))
-	  {
-	    return true;
-	  }
-
-	return false;
+	      return ('0' <= c && '9' >= c)
+			      || ('a' <= c && 'f' >= c)
+			      || ('A' <= c && 'F' >= c);
       }
 
   /********************************************************
@@ -4360,12 +4348,7 @@ class CUtility
      char c
      )
       {
-	if ('0' <= c && '7' >= c)
-	  {
-	    return true;
-	  }
-
-	return false;
+	      return '0' <= c && '7' >= c;
       }
 	
   /********************************************************
@@ -4376,17 +4359,12 @@ class CUtility
      char c
      )
       {
-	if ('\b' == c 
-	    || '\t' == c
-	    || '\n' == c
-	    || '\f' == c
-	    || '\r' == c
-	    || ' ' == c)
-	  {
-	    return true;
-	  }
-	
-	return false;
+	      return '\b' == c
+			      || '\t' == c
+			      || '\n' == c
+			      || '\f' == c
+			      || '\r' == c
+			      || ' ' == c;
       }
 
   /********************************************************
@@ -4397,13 +4375,8 @@ class CUtility
      char c
      )
       {
-	if ('\n' == c
-	    || '\r' == c)
-	    {
-	    return true;
-	  }
-	
-	return false;
+	      return '\n' == c
+			      || '\r' == c;
       }
 
   /********************************************************
@@ -4421,11 +4394,11 @@ class CUtility
     *******************************************************/
   static int bytencmp
     (
-     byte a[],
-     int a_first,
-     byte b[],
-     int b_first,
-     int n
+		    byte[] a,
+		    int a_first,
+		    byte[] b,
+		    int b_first,
+		    int n
      )
       {
 	int elem;
@@ -4461,11 +4434,11 @@ class CUtility
     *******************************************************/
   static int charncmp
     (
-     char a[],
-     int a_first,
-     char b[],
-     int b_first,
-     int n
+		    char[] a,
+		    int a_first,
+		    char[] b,
+		    int b_first,
+		    int n
      )
       {
 	int elem;
@@ -4537,7 +4510,7 @@ class CError
     Constants
     Description: String messages for parse_error();
     *******************************************************/
-  static final String errmsg[] = 
+  static final String[] errmsg =
     {
       "Malformed regular expression.",
       "Missing close parenthesis.",
@@ -4854,7 +4827,7 @@ class CLexGen
     (
      String filename
      )
-      throws java.io.FileNotFoundException, java.io.IOException
+      throws java.io.IOException
       {
 	/* Successful initialization flag. */
 	m_init_flag = false;
@@ -4921,8 +4894,7 @@ class CLexGen
   void generate
     (
      )
-      throws java.io.IOException, java.io.FileNotFoundException
-      {
+      throws java.io.IOException {
 	if (false == m_init_flag)
 	  {
 	    CError.parse_error(CError.E_INIT,0);
@@ -5045,7 +5017,7 @@ class CLexGen
     (
      )
       {
-	char buffer[];
+	char[] buffer;
 	int elem;
 
 	/* Skip white space. */
@@ -5099,11 +5071,11 @@ class CLexGen
     **************************************************************/
   private char[] packCode
     (
-     char start_dir[],
-     char end_dir[],
-     char prev_code[],
-     int prev_read,
-     int specified
+		    char[] start_dir,
+		    char[] end_dir,
+		    char[] prev_code,
+		    int prev_read,
+		    int specified
      )
       throws java.io.IOException
       {
@@ -5212,82 +5184,82 @@ class CLexGen
   /***************************************************************
     Member Variables: JLex directives.
     **************************************************************/
-  private char m_state_dir[] = { 
+  private char[] m_state_dir = {
     '%', 's', 't', 
     'a', 't', 'e',
     '\0'
     };
   
-  private char m_char_dir[] = { 
+  private char[] m_char_dir = {
     '%', 'c', 'h',
     'a', 'r',
     '\0'
     };
 
-  private char m_line_dir[] = { 
+  private char[] m_line_dir = {
     '%', 'l', 'i',
     'n', 'e',
     '\0'
     };
 
-  private char m_cup_dir[] = { 
+  private char[] m_cup_dir = {
     '%', 'c', 'u',
     'p', 
     '\0'
     };
 
-  private char m_class_dir[] = { 
+  private char[] m_class_dir = {
     '%', 'c', 'l', 
     'a', 's', 's',
     '\0'
     };
 
-  private char m_implements_dir[] = { 
+  private char[] m_implements_dir = {
     '%', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 's', 
     '\0'
     };
 
-  private char m_function_dir[] = { 
+  private char[] m_function_dir = {
     '%', 'f', 'u',
     'n', 'c', 't',
     'i', 'o', 'n',
     '\0'
     };
 
-  private char m_type_dir[] = { 
+  private char[] m_type_dir = {
     '%', 't', 'y',
     'p', 'e',
     '\0'
     };
 
-  private char m_integer_dir[] = { 
+  private char[] m_integer_dir = {
     '%', 'i', 'n',
     't', 'e', 'g', 
     'e', 'r',
     '\0'
     };
 
-  private char m_intwrap_dir[] = { 
+  private char[] m_intwrap_dir = {
     '%', 'i', 'n',
     't', 'w', 'r', 
     'a', 'p',
     '\0'
     };
 
-  private char m_full_dir[] = { 
+  private char[] m_full_dir = {
     '%', 'f', 'u', 
     'l', 'l',
     '\0'
     };
 
-  private char m_unicode_dir[] = { 
+  private char[] m_unicode_dir = {
     '%', 'u', 'n', 
     'i', 'c', 'o',
     'd', 'e',
     '\0'
     };
 
-  private char m_ignorecase_dir[] = {
+  private char[] m_ignorecase_dir = {
     '%', 'i', 'g',
     'n', 'o', 'r',
     'e', 'c', 'a', 
@@ -5295,26 +5267,26 @@ class CLexGen
     '\0'
     };
 
-  private char m_notunix_dir[] = { 
+  private char[] m_notunix_dir = {
     '%', 'n', 'o',
     't', 'u', 'n', 
     'i', 'x',
     '\0'
     };
 
-  private char m_init_code_dir[] = { 
+  private char[] m_init_code_dir = {
     '%', 'i', 'n', 
     'i', 't', '{',
     '\0'
     };
 
-  private char m_init_code_end_dir[] = { 
+  private char[] m_init_code_end_dir = {
     '%', 'i', 'n', 
     'i', 't', '}',
     '\0'
     };
 
-  private char m_init_throw_code_dir[] = { 
+  private char[] m_init_throw_code_dir = {
     '%', 'i', 'n', 
     'i', 't', 't',
     'h', 'r', 'o',
@@ -5322,7 +5294,7 @@ class CLexGen
     '\0'
     };
 
-  private char m_init_throw_code_end_dir[] = { 
+  private char[] m_init_throw_code_end_dir = {
     '%', 'i', 'n', 
     'i', 't', 't',
     'h', 'r', 'o',
@@ -5330,7 +5302,7 @@ class CLexGen
     '\0'
     };
 
-  private char m_yylex_throw_code_dir[] = { 
+  private char[] m_yylex_throw_code_dir = {
     '%', 'y', 'y', 'l', 
     'e', 'x', 't',
     'h', 'r', 'o',
@@ -5338,7 +5310,7 @@ class CLexGen
     '\0'
     };
 
-  private char m_yylex_throw_code_end_dir[] = { 
+  private char[] m_yylex_throw_code_end_dir = {
     '%', 'y', 'y', 'l', 
     'e', 'x', 't',
     'h', 'r', 'o',
@@ -5346,33 +5318,33 @@ class CLexGen
     '\0'
     };
 
-  private char m_eof_code_dir[] = { 
+  private char[] m_eof_code_dir = {
     '%', 'e', 'o', 
     'f', '{',
     '\0'
     };
 
-  private char m_eof_code_end_dir[] = { 
+  private char[] m_eof_code_end_dir = {
     '%', 'e', 'o', 
     'f', '}',
     '\0'
     };
 
-  private char m_eof_value_code_dir[] = { 
+  private char[] m_eof_value_code_dir = {
     '%', 'e', 'o', 
     'f', 'v', 'a', 
     'l', '{',
     '\0'
     };
 
-  private char m_eof_value_code_end_dir[] = { 
+  private char[] m_eof_value_code_end_dir = {
     '%', 'e', 'o', 
     'f', 'v', 'a',
     'l', '}',
     '\0'
     };
 
-  private char m_eof_throw_code_dir[] = { 
+  private char[] m_eof_throw_code_dir = {
     '%', 'e', 'o', 
     'f', 't', 'h',
     'r', 'o', 'w',
@@ -5380,7 +5352,7 @@ class CLexGen
     '\0'
     };
 
-  private char m_eof_throw_code_end_dir[] = { 
+  private char[] m_eof_throw_code_end_dir = {
     '%', 'e', 'o', 
     'f', 't', 'h',
     'r', 'o', 'w',
@@ -5388,23 +5360,23 @@ class CLexGen
     '\0'
     };
 
-  private char m_class_code_dir[] = { 
+  private char[] m_class_code_dir = {
     '%', '{',
     '\0'
     };
 
-  private char m_class_code_end_dir[] = { 
+  private char[] m_class_code_end_dir = {
     '%', '}',
     '\0'
     };
 
-  private char m_yyeof_dir[] = { 
+  private char[] m_yyeof_dir = {
     '%', 'y', 'y',
     'e', 'o', 'f',
     '\0'
     };
   
-  private char m_public_dir[] = { 
+  private char[] m_public_dir = {
     '%', 'p', 'u',
     'b', 'l', 'i', 
     'c', '\0'
@@ -5449,13 +5421,9 @@ class CLexGen
 		  System.arraycopy(m_input.m_line, 2,
 				   m_input.m_line, 0, m_input.m_line_read);
 
-		  m_input.m_pushback_line = true;
-		  /* Check for and discard empty line. */
-		  if (0 == m_input.m_line_read 
-		      || '\n' == m_input.m_line[0])
-		    {
-		      m_input.m_pushback_line = false;
-		    }
+			/* Check for and discard empty line. */
+			m_input.m_pushback_line = 0 != m_input.m_line_read
+					&& '\n' != m_input.m_line[0];
 
 		  return;
 		}
@@ -5951,7 +5919,7 @@ class CLexGen
 	
 	if (null == state)
 	  {
-	    return (new String("--"));
+	    return ("--");
 	  }
 
 	index = m_spec.m_nfa_states.indexOf(state);
@@ -5971,22 +5939,22 @@ class CLexGen
 	switch (i)
 	  {
 	  case (int) '\b':
-	    return (new String("\\b"));
+	    return ("\\b");
 
 	  case (int) '\t':
-	    return (new String("\\t"));
+	    return ("\\t");
 
 	  case (int) '\n':
-	    return (new String("\\n"));
+	    return ("\\n");
 
 	  case (int) '\f':
-	    return (new String("\\f"));
+	    return ("\\f");
 
 	  case (int) '\r':
-	    return (new String("\\r"));
+	    return ("\\r");
 	    
 	  case (int) ' ':
-	    return (new String("\\ "));
+	    return ("\\ ");
 	    
 	  default:
 	    return ((new Character((char) i)).toString());
@@ -6271,7 +6239,7 @@ class CLexGen
 	String def;
 	int def_elem;
 	String name;
-	char replace[];
+	char[] replace;
 	int rep_elem;
 
 	if (CUtility.DEBUG)
@@ -6510,15 +6478,8 @@ class CLexGen
 	      {
 		in_quote = !in_quote;
 	      }
-	    
-	    if ('\\' == m_input.m_line[elem] && false == saw_escape)
-	      {
-		saw_escape = true;
-	      }
-	    else
-	      {
-		saw_escape = false;
-	      }
+
+		  saw_escape = '\\' == m_input.m_line[elem] && false == saw_escape;
 	    if (false == saw_escape && false == in_quote) { // CSA, 24-jul-99
 	      if ('[' == m_input.m_line[elem] && false == in_ccl)
 		in_ccl = true;
@@ -6781,7 +6742,7 @@ class CLexGen
       throws java.io.IOException
       {
 	CAccept accept;
-	char action[];
+	char[] action;
 	int action_index;
 	int brackets;
 	boolean insinglequotes;
@@ -7053,14 +7014,7 @@ class CLexGen
 
 	/* Look for backslash, and corresponding 
 	   escape sequence. */
-	if ('\\' == m_input.m_line[m_input.m_line_index])
-	  {
-	    saw_escape = true;
-	  }
-	else
-	  {
-	    saw_escape = false;
-	  }
+	      saw_escape = '\\' == m_input.m_line[m_input.m_line_index];
 
 	if (false == m_spec.m_in_quote)
 	  {
@@ -7416,7 +7370,7 @@ class CLexGen
 			chars_printed = 0;
 		      }
 		    
-		    str = interp_int((int) j);
+		    str = interp_int(j);
 		    System.out.print(str);
 				
 		    chars_printed = chars_printed + str.length(); 
@@ -7454,9 +7408,9 @@ class CLexGen
  */
 final class SparseBitSet implements Cloneable {
     /** Sorted array of bit-block offsets. */
-    int  offs[];
+    int[] offs;
     /** Array of bit-blocks; each holding BITS bits. */
-    long bits[];
+    long[] bits;
     /** Number of blocks currently in use. */
     int size;
     /** log base 2 of BITS, for the identity: x/BITS == x >> LG_BITS */
@@ -7596,8 +7550,8 @@ final class SparseBitSet implements Cloneable {
     }
 
     // BINARY OPERATION MACHINERY
-    private static interface BinOp {
-	public long op(long a, long b);
+    private interface BinOp {
+	long op(long a, long b);
     }
     private static final BinOp AND = new BinOp() {
 	public final long op(long a, long b) { return a & b; }
@@ -7703,8 +7657,8 @@ final class SparseBitSet implements Cloneable {
     public Object clone() {
 	try { 
 	    SparseBitSet set = (SparseBitSet)super.clone();
-	    set.bits = (long[]) bits.clone();
-	    set.offs = (int []) offs.clone();
+	    set.bits = bits.clone();
+	    set.offs = offs.clone();
 	    return set;
 	} catch (CloneNotSupportedException e) {
 	    // this shouldn't happen, since we are Cloneable

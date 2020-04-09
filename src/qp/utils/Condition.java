@@ -92,9 +92,9 @@ public class Condition {
         Attribute newlhs = (Attribute) lhs.clone();
         Object newrhs;
         if (optype == SELECT)
-            newrhs = (String) rhs;
+            newrhs = rhs;
         else
-            newrhs = (Attribute) ((Attribute) rhs).clone();
+            newrhs = ((Attribute) rhs).clone();
 
         Condition newcn = new Condition(newlhs, exprtype, newrhs);
         newcn.setOpType(optype);

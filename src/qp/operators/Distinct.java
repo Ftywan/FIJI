@@ -17,8 +17,8 @@ public class Distinct extends Operator {
     ArrayList<Integer> projectedIndices = new ArrayList<Integer>();
     private Operator base;
     private Sort sortedFile;
-    private int batchSize;;
-    private int numOfBuffer;
+    private int batchSize;
+	private int numOfBuffer;
     private boolean eos = false;
     private Batch in = null;
     // batch index is the index for tuple on each batch.
@@ -121,7 +121,7 @@ public class Distinct extends Operator {
         Operator newBase = (Operator) base.clone();
         ArrayList<Attribute> newProjectList = new ArrayList<>();
         for (int i = 0; i < projectedlist.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) projectedlist.get(i)).clone();
+            Attribute attribute = (Attribute) projectedlist.get(i).clone();
             newProjectList.add(attribute);
         }
         Distinct newDistinct = new Distinct(newBase, newProjectList);

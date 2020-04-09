@@ -264,7 +264,7 @@ public class Sort extends Operator {
         int idx = 0;
         // check on each sort index, if one of them is not 0, return the ordering immediately.
         while (idx < attributeArrayList.size()) {
-            int sortIndex = schema.indexOf((Attribute) attributeArrayList.get(idx));
+            int sortIndex = schema.indexOf(attributeArrayList.get(idx));
             int res = Tuple.compareTuples(t1, t2, sortIndex);
             if (res != 0) {
                 return res;

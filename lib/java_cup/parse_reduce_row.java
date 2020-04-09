@@ -36,6 +36,6 @@ public class parse_reduce_row {
   /*-----------------------------------------------------------*/
 
   /** Actual entries for the row. */
-  public lalr_state under_non_term[];
+  public lalr_state[] under_non_term;
 }
 

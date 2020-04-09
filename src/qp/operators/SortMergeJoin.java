@@ -148,7 +148,7 @@ public class SortMergeJoin extends Join {
 			rightPartition = getNextPartition();
 			if (checkPartitionSize(rightPartition)) {
 				System.exit(0); // if exceeds the buffers available, terminate the process
-			};
+			}
 			partitionEosr = 0;
 			rightTuple = rightPartition.get(0);
 		}
@@ -270,7 +270,7 @@ public class SortMergeJoin extends Join {
 		}
 		if (checkPartitionSize(partition)) {
 			System.exit(0); // if exceeds the buffers available, terminate the process
-		};
+		}
 		return partition;
 	}
 

@@ -54,10 +54,10 @@ public class production {
    *  the parser.
    */
   public production(
-    non_terminal    lhs_sym, 
-    production_part rhs_parts[], 
-    int             rhs_l,
-    String          action_str)
+		  non_terminal    lhs_sym,
+		  production_part[] rhs_parts,
+		  int             rhs_l,
+		  String          action_str)
     throws internal_error
     {
       int         i;
@@ -164,9 +164,9 @@ public class production {
 
   /** Constructor with no action string. */
   public production(
-    non_terminal    lhs_sym, 
-    production_part rhs_parts[], 
-    int             rhs_l)
+		  non_terminal    lhs_sym,
+		  production_part[] rhs_parts,
+		  int             rhs_l)
     throws internal_error
     {
       this(lhs_sym,rhs_parts,rhs_l,null);
@@ -177,12 +177,12 @@ public class production {
   /* Constructor with precedence and associativity of production
      contextually define */
   public production(
-    non_terminal    lhs_sym, 
-    production_part rhs_parts[], 
-    int             rhs_l,
-    String          action_str,
-    int		    prec_num,
-    int             prec_side)
+		  non_terminal    lhs_sym,
+		  production_part[] rhs_parts,
+		  int             rhs_l,
+		  String          action_str,
+		  int		    prec_num,
+		  int             prec_side)
     throws internal_error
     {
       this(lhs_sym,rhs_parts,rhs_l,action_str);
@@ -197,11 +197,11 @@ public class production {
   /* Constructor w/ no action string and contextual precedence
      defined */
   public production(
-    non_terminal    lhs_sym, 
-    production_part rhs_parts[], 
-    int             rhs_l,
-    int             prec_num,
-    int             prec_side)
+		  non_terminal    lhs_sym,
+		  production_part[] rhs_parts,
+		  int             rhs_l,
+		  int             prec_num,
+		  int             prec_side)
     throws internal_error
     {
       this(lhs_sym,rhs_parts,rhs_l,null);
@@ -268,7 +268,7 @@ public class production {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** A collection of parts for the right hand side. */
-  protected production_part _rhs[];
+  protected production_part[] _rhs;
 
   /** Access to the collection of parts for the right hand side. */
   public production_part rhs(int indx) throws internal_error
@@ -413,9 +413,9 @@ public class production {
    * @param lhs_type     the object type associated with the LHS symbol.
    */ 
   protected String declare_labels(
-    production_part  rhs[], 
-    int              rhs_len, 
-    String           final_action)
+		  production_part[] rhs,
+		  int              rhs_len,
+		  String           final_action)
     {
       String declaration = "";
 
@@ -451,7 +451,7 @@ public class production {
    * @param len       amount of that array that is valid.
    * @return          remaining valid length.
    */
-  protected int merge_adjacent_actions(production_part rhs_parts[], int len)
+  protected int merge_adjacent_actions(production_part[] rhs_parts, int len)
     {
       int from_loc, to_loc, merge_cnt;
 
@@ -506,8 +506,8 @@ public class production {
    * @return          the removed action part.
    */
   protected action_part strip_trailing_action(
-    production_part rhs_parts[],
-    int             len)
+		  production_part[] rhs_parts,
+		  int             len)
     {
       action_part result;
 

@@ -149,8 +149,8 @@ public class Main {
   /** The main driver for the system. 
    * @param argv an array of strings containing command line arguments.
    */
-  public static void main(String argv[]) 
-    throws internal_error, java.io.IOException, java.lang.Exception
+  public static void main(String[] argv)
+    throws java.lang.Exception
     {
       boolean did_output = false;
 
@@ -268,7 +268,7 @@ public class Main {
    *  flags and variables. 
    * @param argv the command line arguments to be parsed.
    */
-  protected static void parse_args(String argv[])
+  protected static void parse_args(String[] argv)
     {
       int len = argv.length;
       int i;
@@ -821,7 +821,7 @@ public class Main {
    */
   public static void dump_machine()
     {
-      lalr_state ordered[] = new lalr_state[lalr_state.number()];
+      lalr_state[] ordered = new lalr_state[lalr_state.number()];
 
       /* put the states in sorted order for a nicer display */
       for (Enumeration s = lalr_state.all(); s.hasMoreElements(); )

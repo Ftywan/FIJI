@@ -264,7 +264,7 @@ public class RandomOptimizer {
                 PlanCost neighborCost = new PlanCost();
                 PlanCost currentCost = new PlanCost();
                 long neighborCostValue = neighborCost.getCost(neighborPlan);
-                System.out.println("   "+ String.valueOf(neighborCostValue));
+                System.out.println("   "+ neighborCostValue);
                 System.out.println("\n");
                 long deltaCost = neighborCostValue - currentCost.getCost(currentPlan);
 

@@ -79,9 +79,6 @@ public class Batch implements Serializable {
     }
 
     public boolean isFull() {
-        if (size() == capacity())
-            return true;
-        else
-            return false;
+        return size() == capacity();
     }
 }

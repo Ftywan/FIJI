@@ -386,7 +386,7 @@ public class lexer {
       StringBuffer result = new StringBuffer();
       String       result_str;
       Integer      keyword_num;
-      char         buffer[] = new char[1];
+      char[] buffer = new char[1];
 
       /* next_char holds first character of id */
       buffer[0] = (char)next_char;

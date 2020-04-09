@@ -18,7 +18,7 @@ public class Scaner implements java_cup.runtime.Scanner {
 	private int yy_buffer_read;
 	private int yy_buffer_start;
 	private int yy_buffer_end;
-	private char yy_buffer[];
+	private char[] yy_buffer;
 	private int yychar;
 	private int yyline;
 	private boolean yy_at_bol;
@@ -55,7 +55,7 @@ public class Scaner implements java_cup.runtime.Scanner {
 	private boolean yy_eof_done = false;
 	private final int YYINITIAL = 0;
 	private final int NEGATE = 1;
-	private final int yy_state_dtrans[] = {
+	private final int[] yy_state_dtrans = {
 		0,
 		0
 	};
@@ -150,9 +150,9 @@ public class Scaner implements java_cup.runtime.Scanner {
 	private int yylength () {
 		return yy_buffer_end - yy_buffer_start;
 	}
-	private char[] yy_double (char buf[]) {
+	private char[] yy_double (char[] buf) {
 		int i;
-		char newbuf[];
+		char[] newbuf;
 		newbuf = new char[2*buf.length];
 		for (i = 0; i < buf.length; ++i) {
 			newbuf[i] = buf[i];
@@ -161,7 +161,7 @@ public class Scaner implements java_cup.runtime.Scanner {
 	}
 	private final int YY_E_INTERNAL = 0;
 	private final int YY_E_MATCH = 1;
-	private java.lang.String yy_error_string[] = {
+	private java.lang.String[] yy_error_string = {
 		"Error: Internal error.\n",
 		"Error: Unmatched input.\n"
 	};
@@ -181,7 +181,7 @@ public class Scaner implements java_cup.runtime.Scanner {
 		int commaIndex;
 		String workString;
 
-		int res[][] = new int[size1][size2];
+		int[][] res = new int[size1][size2];
 		for (int i= 0; i < size1; i++) {
 			for (int j= 0; j < size2; j++) {
 				if (sequenceLength != 0) {
@@ -209,7 +209,7 @@ public class Scaner implements java_cup.runtime.Scanner {
 		}
 		return res;
 	}
-	private int yy_acpt[] = {
+	private int[] yy_acpt = {
 		/* 0 */ YY_NOT_ACCEPT,
 		/* 1 */ YY_NO_ANCHOR,
 		/* 2 */ YY_NO_ANCHOR,
@@ -285,17 +285,17 @@ public class Scaner implements java_cup.runtime.Scanner {
 		/* 72 */ YY_NO_ANCHOR,
 		/* 73 */ YY_NO_ANCHOR
 	};
-	private int yy_cmap[] = unpackFromString(1,130,
+	private int[] yy_cmap = unpackFromString(1,130,
 "0:9,24:2,0,24:2,0:18,28,29,27,30:4,32,35,36,23,30,34,30,40,30,26:10,30:2,38" +
 ",37,39,30:2,18,15,4,17,2,6,12,11,20,25:2,3,9,21,8,14,25,7,1,5,13,22,10,19,1" +
 "6,25,30,31,30:2,25,30,25:13,33,25:5,33,25:6,30:4,0,41:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,74,
+	private int[] yy_rmap = unpackFromString(1,74,
 "0,1,2,3,2:4,4,5,2:6,6:11,7,8,9,6,10,11,12,13,14,15,16,17,18,19,20,21,22,23," +
 "24,25,26,27,28,29,30,31,32,33,34,35,36,6,37,38,39,40,41,42,43,44,45,46,47,4" +
 "8,49,50,51")[0];
 
-	private int yy_nxt[][] = unpackFromString(52,42,
+	private int[][] yy_nxt = unpackFromString(52,42,
 "-1,1,58:2,64,58,65,58,66,67,68,58,69,58:4,70,71,58:4,2,3,58,-1,27,3,29,-1:3" +
 ",58,4,5,6,7,8,9,10,11,-1,58,72,58:10,28,58:9,-1:2,58,30,-1:6,58,-1:74,3,-1:" +
 "3,3,-1:50,14,-1:41,15,-1:5,58:22,-1:2,58,30,-1:6,58,-1:9,27:23,-1,27:2,12,2" +

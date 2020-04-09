@@ -57,10 +57,7 @@ public class Select extends Operator {
         int tuplesize = schema.getTupleSize();
         batchsize = Batch.getPageSize() / tuplesize;
 
-        if (base.open())
-            return true;
-        else
-            return false;
+        return base.open();
     }
 
     /**
@@ -145,23 +142,17 @@ public class Select extends Operator {
                 System.out.println("Select: Malformed condition");
             }
             if (exprtype == Condition.LESSTHAN) {
-                if (srcVal < checkVal)
-                    return true;
+                return srcVal < checkVal;
             } else if (exprtype == Condition.GREATERTHAN) {
-                if (srcVal > checkVal)
-                    return true;
+                return srcVal > checkVal;
             } else if (exprtype == Condition.LTOE) {
-                if (srcVal <= checkVal)
-                    return true;
+                return srcVal <= checkVal;
             } else if (exprtype == Condition.GTOE) {
-                if (srcVal >= checkVal)
-                    return true;
+                return srcVal >= checkVal;
             } else if (exprtype == Condition.EQUAL) {
-                if (srcVal == checkVal)
-                    return true;
+                return srcVal == checkVal;
             } else if (exprtype == Condition.NOTEQUAL) {
-                if (srcVal != checkVal)
-                    return true;
+                return srcVal != checkVal;
             } else {
                 System.out.println("Select: Incorrect condition operator");
             }
@@ -176,17 +167,17 @@ public class Select extends Operator {
                 System.out.println("Select: Malformed condition");
             }
             if (exprtype == Condition.LESSTHAN) {
-                if (flag < 0) return true;
+                return flag < 0;
             } else if (exprtype == Condition.GREATERTHAN) {
-                if (flag > 0) return true;
+                return flag > 0;
             } else if (exprtype == Condition.LTOE) {
-                if (flag <= 0) return true;
+                return flag <= 0;
             } else if (exprtype == Condition.GTOE) {
-                if (flag >= 0) return true;
+                return flag >= 0;
             } else if (exprtype == Condition.EQUAL) {
-                if (flag == 0) return true;
+                return flag == 0;
             } else if (exprtype == Condition.NOTEQUAL) {
-                if (flag != 0) return true;
+                return flag != 0;
             } else {
                 System.out.println("Select: Incorrect condition operator");
             }
@@ -201,17 +192,17 @@ public class Select extends Operator {
                 System.out.println("Select: Malformed condition");
             }
             if (exprtype == Condition.LESSTHAN) {
-                if (srcVal < checkVal) return true;
+                return srcVal < checkVal;
             } else if (exprtype == Condition.GREATERTHAN) {
-                if (srcVal > checkVal) return true;
+                return srcVal > checkVal;
             } else if (exprtype == Condition.LTOE) {
-                if (srcVal <= checkVal) return true;
+                return srcVal <= checkVal;
             } else if (exprtype == Condition.GTOE) {
-                if (srcVal >= checkVal) return true;
+                return srcVal >= checkVal;
             } else if (exprtype == Condition.EQUAL) {
-                if (srcVal == checkVal) return true;
+                return srcVal == checkVal;
             } else if (exprtype == Condition.NOTEQUAL) {
-                if (srcVal != checkVal) return true;
+                return srcVal != checkVal;
             } else {
                 System.out.println("Select: Incorrect condition operator");
             }

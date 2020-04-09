@@ -213,7 +213,7 @@ public class QueryMain {
             } else if (data == null) {
                 out.print("-NULL-\t");
             } else {
-                out.print(((String) data) + "\t");
+                out.print(data + "\t");
             }
         }
         out.println();

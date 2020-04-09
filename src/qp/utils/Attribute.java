@@ -73,17 +73,11 @@ public class Attribute implements Serializable {
     }
 
     public boolean isPrimaryKey() {
-        if (key == PK)
-            return true;
-        else
-            return false;
+        return key == PK;
     }
 
     public boolean isForeignKey() {
-        if (key == FK)
-            return true;
-        else
-            return false;
+        return key == FK;
     }
 
 

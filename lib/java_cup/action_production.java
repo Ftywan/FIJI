@@ -18,11 +18,11 @@ public class action_production extends production {
    * @param action_str the trailing reduce action for this production.
    */ 
   public action_production(
-    production      base,
-    non_terminal    lhs_sym, 
-    production_part rhs_parts[],
-    int             rhs_len,
-    String          action_str)
+		  production      base,
+		  non_terminal    lhs_sym,
+		  production_part[] rhs_parts,
+		  int             rhs_len,
+		  String          action_str)
     throws internal_error
     {
       super(lhs_sym, rhs_parts, rhs_len, action_str);

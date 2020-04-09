@@ -22,7 +22,7 @@ public class parser extends java_cup.runtime.lr_parser {
   public parser(java_cup.runtime.Scanner s) {super(s);}
 
   /** Production table. */
-  protected static final short _production_table[][] = 
+  protected static final short[][] _production_table =
     unpackFromStrings(new String[] {
     "\000\046\000\002\003\003\000\002\002\004\000\002\003" +
     "\005\000\002\003\005\000\002\003\007\000\002\003\006" +
@@ -325,7 +325,7 @@ class CUP$parser$actions {
 		TokenValue i = (TokenValue)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		int pleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).left;
 		int pright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right;
-		Object p = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-0)).value;
+		Object p = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-0)).value;
 		
 			System.out.println("syntax error: incorrect attribute:"+ i.text());
 			System.exit(0);
@@ -432,7 +432,7 @@ class CUP$parser$actions {
               Condition RESULT = null;
 		int pleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
 		int pright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
-		Object p = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		Object p = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		int sleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).left;
 		int sright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right;
 		TokenValue s = (TokenValue)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-0)).value;
@@ -453,7 +453,7 @@ class CUP$parser$actions {
 		Attribute at = (Attribute)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		int pleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).left;
 		int pright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right;
-		Object p = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-0)).value;
+		Object p = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-0)).value;
 		
 			System.out.println("syntax error: incorrect condition");
 			System.exit(0);

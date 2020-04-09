@@ -57,7 +57,7 @@ public class OrderBy extends Operator {
     public boolean open() {
         batchSize = Batch.getPageSize() / schema.getTupleSize();
         for (int i = 0; i < orderedlist.size(); i++) {
-            Attribute attribute = (Attribute) orderedlist.get(i);
+            Attribute attribute = orderedlist.get(i);
             asIndices.add(schema.indexOf(attribute));
         }
         sortedFile = new Sort(base, orderedlist, numBuff);
@@ -121,7 +121,7 @@ public class OrderBy extends Operator {
         Operator newBase = (Operator) base.clone();
         ArrayList<Attribute> newOrderByList = new ArrayList<>();
         for (int i = 0; i < orderedlist.size(); i++) {
-            Attribute attribute = (Attribute) ((Attribute) orderedlist.get(i)).clone();
+            Attribute attribute = (Attribute) orderedlist.get(i).clone();
             newOrderByList.add(attribute);
         }
 

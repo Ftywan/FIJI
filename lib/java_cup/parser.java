@@ -21,7 +21,7 @@ public class parser extends java_cup.runtime.lr_parser {
   public parser(java_cup.runtime.Scanner s) {super(s);}
 
   /** Production table. */
-  protected static final short _production_table[][] = 
+  protected static final short[][] _production_table =
     unpackFromStrings(new String[] {
     "\000\153\000\002\002\004\000\002\055\002\000\002\003" +
     "\012\000\002\003\007\000\002\056\002\000\002\004\006" +
@@ -431,7 +431,7 @@ class CUP$parser$actions {
     }
 
   /** string to build up multiple part names */
-  protected String multipart_name = new String();
+  protected String multipart_name = "";
 
   /** append a new name segment to the accumulated multipart name */
   protected void append_multipart(String name)
@@ -1093,7 +1093,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$13
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(22/*production*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1114,10 +1114,10 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$11
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
               // propagate RESULT from NT$12
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 		int lhs_idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).left;
 		int lhs_idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).right;
 		String lhs_id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-5)).value;
@@ -1197,7 +1197,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$10
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		int start_nameleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
 		int start_nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
 		String start_name = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
@@ -1300,7 +1300,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$9
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(31/*preced*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1323,7 +1323,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$8
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(31/*preced*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1346,7 +1346,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$7
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(31/*preced*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1441,7 +1441,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$6
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(35/*declares_non_term*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1453,7 +1453,7 @@ class CUP$parser$actions {
               Object RESULT = null;
  
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(49/*NT$6*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1465,7 +1465,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$5
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(34/*declares_term*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1477,7 +1477,7 @@ class CUP$parser$actions {
               Object RESULT = null;
  
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(48/*NT$5*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1489,7 +1489,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$4
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(18/*symbol*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1501,7 +1501,7 @@ class CUP$parser$actions {
               Object RESULT = null;
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(47/*NT$4*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1513,7 +1513,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$3
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(18/*symbol*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1525,7 +1525,7 @@ class CUP$parser$actions {
               Object RESULT = null;
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(46/*NT$3*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1713,7 +1713,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$2
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(14/*import_spec*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1728,7 +1728,7 @@ class CUP$parser$actions {
 	  emit.import_list.push(multipart_name);
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(45/*NT$2*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1767,7 +1767,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$1
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(2/*package_spec*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1782,7 +1782,7 @@ class CUP$parser$actions {
 	  emit.package_name = multipart_name;
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	
               CUP$parser$result = new java_cup.runtime.Symbol(44/*NT$1*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1803,7 +1803,7 @@ class CUP$parser$actions {
               Object RESULT = null;
               // propagate RESULT from NT$0
               if ( ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-7)).value != null )
-                RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-7)).value;
+                RESULT = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-7)).value;
 
               CUP$parser$result = new java_cup.runtime.Symbol(1/*spec*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-7)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }
@@ -1830,7 +1830,7 @@ class CUP$parser$actions {
               Object RESULT = null;
 		int start_valleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
 		int start_valright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
-		Object start_val = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		Object start_val = ((Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		RESULT = start_val;
               CUP$parser$result = new java_cup.runtime.Symbol(0/*$START*/, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-0)).right, RESULT);
             }

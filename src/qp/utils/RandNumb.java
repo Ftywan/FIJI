@@ -16,10 +16,7 @@ public class RandNumb {
 
     /** Coin flip **/
     public static boolean flipCoin() {
-        if (Math.random() < 0.5)
-            return true;
-        else
-            return false;
+	    return Math.random() < 0.5;
     }
 
 }
